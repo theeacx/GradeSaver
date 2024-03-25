@@ -109,4 +109,7 @@ interface AppDao {
     @Transaction
     @Query("SELECT * FROM courses WHERE professorId = :professorId")
     suspend fun getCoursesByProfessor(professorId: Int): List<Course>
+
+    @Query("SELECT * FROM users WHERE email = :email LIMIT 1")
+    suspend fun getUserByEmail(email: String): User?
 }
