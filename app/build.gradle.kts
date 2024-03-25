@@ -46,6 +46,7 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
+
     // Room
     val room_version = "2.6.1"
 
@@ -75,4 +76,7 @@ dependencies {
     // LiveData
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version")
     // Lifecycles only (without ViewModel or LiveData)
+
+  //material components
+    implementation("androidx.compose.material:material:1.6.4")
 }

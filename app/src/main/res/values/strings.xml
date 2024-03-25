@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">GradeSaver</string>
+    <string-array name="role_array">
+        <item>Student</item>
+        <item>Professor</item>
+    </string-array>
 </resources>

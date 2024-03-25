@@ -7,6 +7,8 @@
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
     </style>
-
+    <style name="Spinner" parent="Widget.AppCompat.Spinner">
+        <item name="backgroundTint">@color/purple</item>
+    </style>
     <style name="Theme.GradeSaver" parent="Base.Theme.GradeSaver" />
 </resources>
