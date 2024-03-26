@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.gradesaver.database.AppDatabase
 import com.example.gradesaver.database.entities.User
+import com.example.gradesaver.security.Hash.Companion.toSHA256
 import kotlinx.coroutines.launch
 
 class SignUpActivity : AppCompatActivity() {
@@ -48,7 +49,8 @@ class SignUpActivity : AppCompatActivity() {
                 else -> {
                     val role = determineUserRole(email)
                     if (role != "Invalid") {
-                        val newUser = User(0, email, password, role) // Ideally, password should be hashed
+                        val hashedPassword = password.toSHA256()
+                        val newUser = User(0, email, hashedPassword, role) // Ideally, password should be hashed
                         lifecycleScope.launch {
                             AppDatabase.getInstance(this@SignUpActivity).appDao().insertUser(newUser)
                             Toast.makeText(this@SignUpActivity, "Sign up successful! Please login.", Toast.LENGTH_SHORT).show()

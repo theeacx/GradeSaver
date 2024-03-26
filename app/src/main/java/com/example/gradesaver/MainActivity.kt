@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.gradesaver.database.AppDatabase
 import com.example.gradesaver.database.dao.AppDao
+import com.example.gradesaver.security.Hash.Companion.toSHA256
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -34,7 +35,7 @@ class MainActivity : AppCompatActivity() {
 
         loginButton.setOnClickListener {
             val inputUsername = username.text.toString().trim()
-            val inputPassword = password.text.toString()
+            val inputPassword = password.text.toString().toSHA256()
 
             when {
                 inputUsername.isEmpty() -> Toast.makeText(this, "Please enter your email!", Toast.LENGTH_SHORT).show()
