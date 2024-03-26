@@ -34,17 +34,6 @@
                 android:textStyle="bold"
                 android:textColor="@color/purple"/>
 
-            <Spinner
-                android:id="@+id/roleSpinner"
-                android:listSelector="@color/purple"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginTop="40dp"
-                android:background="@drawable/custom_edittext"
-                android:drawableLeft="@drawable/baseline_school_24"
-                android:drawablePadding="8dp"
-                android:padding="8dp" />
-
 
             <EditText
                 android:layout_width="match_parent"
