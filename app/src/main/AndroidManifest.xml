@@ -13,6 +13,12 @@
         android:theme="@style/Theme.GradeSaver"
         tools:targetApi="31">
         <activity
+            android:name=".ProfessorMainScreenActivity"
+            android:exported="false" />
+        <activity
+            android:name=".StudentMainScreenActivity"
+            android:exported="false" />
+        <activity
             android:name=".PersonalProfileActivity"
             android:exported="false" />
         <activity
