@@ -87,34 +87,39 @@
                 app:layout_constraintTop_toBottomOf="@+id/personalProfileText"
                 app:layout_constraintTop_toTopOf="parent"
                 app:maxImageSize="60dp"
-                app:srcCompat="@android:drawable/ic_menu_delete"
+                app:srcCompat="@drawable/baseline_trash"
                 app:tint="@color/white" />
 
-            <EditText
-                android:id="@+id/nameEditText"
+            <TextView
+                android:id="@+id/emailTextView"
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:editable="false"
-                android:hint="Name"
-                android:inputType="textPersonName"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
                 android:padding="8dp"
-                app:layout_constraintBottom_toTopOf="@+id/positionEditText"
+                android:text="Email"
+                android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                android:textColor="@color/purple"
+                android:textSize="24sp"
+                android:textStyle="bold"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/profileImage"
-                tools:ignore="TextContrastCheck" />
+                app:layout_constraintTop_toBottomOf="@+id/profileImage" />
 
-            <EditText
-                android:id="@+id/positionEditText"
+            <TextView
+                android:id="@+id/typeTextView"
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:editable="false"
-                android:hint="Position"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
                 android:padding="8dp"
-                app:layout_constraintBottom_toTopOf="@+id/logoutButton"
+                android:text="Type"
+                android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                android:textColor="@color/purple"
+                android:textSize="24sp"
+                android:textStyle="bold"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/nameEditText" />
+                app:layout_constraintTop_toBottomOf="@id/emailTextView" />
+
 
 
             <Button
@@ -140,7 +145,7 @@
                 app:layout_constraintBottom_toTopOf="@+id/changePasswordButton"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/positionEditText" />
+                app:layout_constraintTop_toBottomOf="@+id/typeTextView" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.cardview.widget.CardView>

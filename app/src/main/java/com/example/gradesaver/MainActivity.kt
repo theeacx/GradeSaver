@@ -48,12 +48,24 @@ class MainActivity : AppCompatActivity() {
     private fun loginUser(inputUsername: String, inputPassword: String, dao: AppDao) {
         lifecycleScope.launch {
             val user = dao.getUserByEmail(inputUsername)
-            if (user != null && user.password == inputPassword) { // Ideally, you should hash the password and compare hashes.
-                Toast.makeText(this@MainActivity, "Login Successful!", Toast.LENGTH_SHORT).show()
-                // Navigate to the next screen or session home
+            if (user != null && user.password == inputPassword) {
+                val nextActivity = when (user.role) {
+                    "Professor" -> ProfessorMainScreenActivity::class.java
+                    "Student" -> StudentMainScreenActivity::class.java
+                    else -> null
+                }
+
+                nextActivity?.let {
+                    val intent = Intent(this@MainActivity, it)
+                    intent.putExtra("USER_DETAILS", user)
+                    startActivity(intent)
+                } ?: run {
+                    Toast.makeText(this@MainActivity, "Invalid user role.", Toast.LENGTH_SHORT).show()
+                }
             } else {
                 Toast.makeText(this@MainActivity, "Login Failed! Please sign up!", Toast.LENGTH_SHORT).show()
             }
         }
     }
+
 }
