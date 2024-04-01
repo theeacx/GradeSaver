@@ -20,7 +20,12 @@ class ProfessorMainScreenActivity : AppCompatActivity() {
             }
             startActivity(intent)
         }
-
-        // Initialize other FABs if necessary
+        val fabTwo: FloatingActionButton = findViewById(R.id.fabTwo)
+        fabTwo.setOnClickListener {
+            val intent = Intent(this, ProfessorCoursesActivity::class.java).apply {
+                putExtra("USER_DETAILS", user)
+            }
+            startActivity(intent)
+        }
     }
 }
