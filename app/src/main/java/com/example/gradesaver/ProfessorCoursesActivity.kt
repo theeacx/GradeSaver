@@ -35,7 +35,7 @@ class ProfessorCoursesActivity : AppCompatActivity() {
 
                 // Now, set the adapter on the ExpandableListView
                 val expandableListView = findViewById<ExpandableListView>(R.id.courseExpandableListView)
-                val adapter = CoursesExpandableListAdapter(this@ProfessorCoursesActivity, courses, courseDetails,lifecycleScope)
+                val adapter = CoursesExpandableListAdapter(this@ProfessorCoursesActivity, courses, courseDetails,lifecycleScope, professorId)
                 expandableListView.setAdapter(adapter)
             }
         }
@@ -71,7 +71,7 @@ class ProfessorCoursesActivity : AppCompatActivity() {
                         lifecycleScope.launch {
                             AppDatabase.getInstance(applicationContext).appDao().insertCourse(newCourse)
                             val updatedCourses = AppDatabase.getInstance(applicationContext).appDao().getCoursesByProfessor(professorId)
-                            val newAdapter = CoursesExpandableListAdapter(this@ProfessorCoursesActivity, updatedCourses, HashMap(), lifecycleScope)
+                            val newAdapter = CoursesExpandableListAdapter(this@ProfessorCoursesActivity, updatedCourses, HashMap(), lifecycleScope, professorId)
                             findViewById<ExpandableListView>(R.id.courseExpandableListView).setAdapter(newAdapter)
                             dialog.dismiss()
                         }

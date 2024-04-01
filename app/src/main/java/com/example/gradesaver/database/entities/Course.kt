@@ -2,7 +2,6 @@ package com.example.gradesaver.database.entities
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
-import java.util.*
 @Entity(
     tableName = "courses",
     foreignKeys = [ForeignKey(
@@ -14,7 +13,7 @@ import java.util.*
 )
 data class Course(
     @PrimaryKey(autoGenerate = true) val courseId: Int = 0,
-    val courseName: String,
+    var courseName: String,
     val professorId: Int,
-    val enrollmentCode: String
+    var enrollmentCode: String
 )

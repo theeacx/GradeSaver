@@ -8,16 +8,20 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseExpandableListAdapter
+import android.widget.EditText
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import com.example.gradesaver.R
 import com.example.gradesaver.database.AppDatabase
 import com.example.gradesaver.database.entities.Course
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Suppress("NAME_SHADOWING")
-class CoursesExpandableListAdapter(private val context: Context, private val courseList: MutableList<Course>, private val courseDetails: HashMap<String, List<String>>, private val scope: CoroutineScope) : BaseExpandableListAdapter() {
+class CoursesExpandableListAdapter(private val context: Context, private val courseList: MutableList<Course>, private val courseDetails: HashMap<String, List<String>>, private val scope: CoroutineScope, private val professorId: Int) : BaseExpandableListAdapter() {
 
     override fun getGroup(groupPosition: Int): Any {
         return this.courseList[groupPosition]
@@ -76,6 +80,9 @@ class CoursesExpandableListAdapter(private val context: Context, private val cou
                         setTitle(course.courseName)
                         setMessage(message)
                         setPositiveButton("OK", null)
+                        setNeutralButton("Edit course details") { dialog, which ->
+                            showEditCourseDialog(course)
+                        }
                     }.show()
                 }
             }
@@ -83,6 +90,48 @@ class CoursesExpandableListAdapter(private val context: Context, private val cou
 
 
         return convertView!!
+    }
+
+    private fun showEditCourseDialog(course: Course) {
+        // Declare EditTexts outside the LinearLayout to ensure they're accessible in the dialog's button listener
+        val courseNameEditText = EditText(context).apply { setText(course.courseName) }
+        val courseCodeEditText = EditText(context).apply { setText(course.enrollmentCode) }
+
+        val layout = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(courseNameEditText)
+            addView(courseCodeEditText)
+        }
+
+        AlertDialog.Builder(context).apply {
+            setTitle("Edit Course")
+            setView(layout)
+            setPositiveButton("OK") { dialog, which ->
+                val newName = courseNameEditText.text.toString()
+                val newCode = courseCodeEditText.text.toString()
+                if (newName.isNotEmpty() && newCode.isNotEmpty()) {
+                    course.courseName = newName
+                    course.enrollmentCode = newCode
+                    scope.launch {
+                        AppDatabase.getInstance(context).appDao().updateCourse(course)
+                        refreshData()
+                    }
+                }
+            }
+            setNegativeButton("Cancel", null)
+            show()
+        }
+    }
+
+    private fun refreshData() {
+        scope.launch {
+            val updatedCourses = AppDatabase.getInstance(context).appDao().getCoursesByProfessor(professorId)
+            courseList.clear()
+            courseList.addAll(updatedCourses)
+            withContext(Dispatchers.Main) {
+                notifyDataSetChanged()
+            }
+        }
     }
 
 
