@@ -1,7 +1,6 @@
 package com.example.gradesaver.adapters
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
@@ -16,14 +15,22 @@ import android.widget.TextView
 import com.example.gradesaver.AddActivityActivity
 import com.example.gradesaver.R
 import com.example.gradesaver.database.AppDatabase
+import com.example.gradesaver.database.entities.Activity
 import com.example.gradesaver.database.entities.Course
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Locale
+
 
 @Suppress("NAME_SHADOWING")
-class CoursesExpandableListAdapter(private val context: Context, private val courseList: MutableList<Course>, private val courseDetails: HashMap<String, List<String>>, private val scope: CoroutineScope, private val professorId: Int) : BaseExpandableListAdapter() {
+class CoursesExpandableListAdapter(private val context: Context,
+                                   private val courseList: MutableList<Course>,
+                                   private val courseDetails: HashMap<String, List<com.example.gradesaver.database.entities.Activity>>, // Modified to List<Activity>
+                                   private val scope: CoroutineScope,
+                                   private val professorId: Int) : BaseExpandableListAdapter() {
 
     override fun getGroup(groupPosition: Int): Any {
         return this.courseList[groupPosition]
@@ -40,10 +47,10 @@ class CoursesExpandableListAdapter(private val context: Context, private val cou
     @SuppressLint("SuspiciousIndentation")
     override fun getGroupView(groupPosition: Int, isExpanded: Boolean, convertView: View?, parent: ViewGroup?): View {
         var convertView = convertView
-                if (convertView == null) {
-                    val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-                    convertView = inflater.inflate(R.layout.group_item, parent, false)
-                }
+        if (convertView == null) {
+            val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+            convertView = inflater.inflate(R.layout.group_item, parent, false)
+        }
 
         val course = getGroup(groupPosition) as Course // Cast to Course instead of String
         val courseTextView = convertView?.findViewById<TextView>(R.id.course)
@@ -76,8 +83,8 @@ class CoursesExpandableListAdapter(private val context: Context, private val cou
             scope.launch {
                 val professor = AppDatabase.getInstance(context).appDao().getUserById(course.professorId)
                 val message = "Professor Email: ${professor.email}\nCourse Code: ${course.enrollmentCode}"
-                // Show AlertDialog on the main thread
-                (context as? Activity)?.runOnUiThread {
+                // Check if context is an instance of Activity before casting
+                (context as? android.app.Activity)?.runOnUiThread {
                     AlertDialog.Builder(context).apply {
                         setTitle(course.courseName)
                         setMessage(message)
@@ -89,6 +96,9 @@ class CoursesExpandableListAdapter(private val context: Context, private val cou
                 }
             }
         }
+
+
+
         val addActivityIcon = convertView?.findViewById<ImageView>(R.id.ivAdd)
         addActivityIcon?.setOnClickListener {
             // Create an intent to start AddActivityActivity
@@ -147,9 +157,8 @@ class CoursesExpandableListAdapter(private val context: Context, private val cou
 
 
     override fun getChild(groupPosition: Int, childPosition: Int): Any {
-        val courseName: String = courseList[groupPosition].courseName // Explicitly cast to String if necessary
-        val details: List<String>? = courseDetails[courseName] // Explicit types
-        return details?.get(childPosition) ?: ""
+        val courseName: String = courseList[groupPosition].courseName
+        return courseDetails[courseName]?.get(childPosition) ?: throw IllegalStateException("Activity not found")
     }
 
 
@@ -158,8 +167,21 @@ class CoursesExpandableListAdapter(private val context: Context, private val cou
     }
 
     override fun getChildView(groupPosition: Int, childPosition: Int, isLastChild: Boolean, convertView: View?, parent: ViewGroup?): View {
-        // Inflate layout and set course details
-        return TODO("Provide the return value")
+        var convertView = convertView
+        if (convertView == null) {
+            val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+            convertView = inflater.inflate(R.layout.child_item, parent, false)
+        }
+
+        val activity = getChild(groupPosition, childPosition) as Activity
+        if (convertView != null) {
+            convertView.findViewById<TextView>(R.id.activityName)?.text = activity.activityName
+        }
+        if (convertView != null) {
+            convertView.findViewById<TextView>(R.id.activityDueDate)?.text = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(activity.dueDate)
+        }
+
+        return convertView!!
     }
 
     override fun getChildId(groupPosition: Int, childPosition: Int): Long {
@@ -171,6 +193,10 @@ class CoursesExpandableListAdapter(private val context: Context, private val cou
     }
 
     override fun getChildrenCount(groupPosition: Int): Int {
-        TODO("Not yet implemented")
+        // Assuming that courseList contains your group data (Courses) and
+        // courseDetails is a HashMap mapping course names to lists of Activities.
+        val course = courseList[groupPosition]
+        // Return the number of activities for this course.
+        return courseDetails[course.courseName]?.size ?: 0
     }
 }

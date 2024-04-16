@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.gradesaver.adapters.CoursesExpandableListAdapter
 import com.example.gradesaver.database.AppDatabase
+import com.example.gradesaver.database.entities.Activity
 import com.example.gradesaver.database.entities.Course
 import com.example.gradesaver.database.entities.User
 import kotlinx.coroutines.launch
@@ -22,20 +23,23 @@ class ProfessorCoursesActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_professor_courses)
 
-        // Retrieve the professor's User object from the intent
         val professor = intent.getSerializableExtra("USER_DETAILS") as? User
-
-        // Now you have the professor's ID in professor?.userId
         val professorId = professor?.userId
+        val expandableListView = findViewById<ExpandableListView>(R.id.courseExpandableListView)
 
         lifecycleScope.launch {
             professorId?.let {
-                val courses = AppDatabase.getInstance(applicationContext).appDao().getCoursesByProfessor(professorId)
-                val courseDetails = HashMap<String, List<String>>() // Populate this with details for each course
+                val courses = AppDatabase.getInstance(applicationContext).appDao().getCoursesByProfessor(it)
+                val courseDetails = HashMap<String, List<Activity>>()
 
-                // Now, set the adapter on the ExpandableListView
-                val expandableListView = findViewById<ExpandableListView>(R.id.courseExpandableListView)
-                val adapter = CoursesExpandableListAdapter(this@ProfessorCoursesActivity, courses, courseDetails,lifecycleScope, professorId)
+                // Fetching activities for each course
+                for (course in courses) {
+                    val activities = AppDatabase.getInstance(applicationContext).appDao().getActivitiesByCourse(course.courseId)
+                    courseDetails[course.courseName] = activities
+                }
+
+                // Set the adapter with courses and their details
+                val adapter = CoursesExpandableListAdapter(this@ProfessorCoursesActivity, courses, courseDetails, lifecycleScope, it)
                 expandableListView.setAdapter(adapter)
             }
         }
@@ -75,6 +79,7 @@ class ProfessorCoursesActivity : AppCompatActivity() {
                             findViewById<ExpandableListView>(R.id.courseExpandableListView).setAdapter(newAdapter)
                             dialog.dismiss()
                         }
+
                     } else {
                         Toast.makeText(this@ProfessorCoursesActivity, "Please fill in all fields", Toast.LENGTH_SHORT).show()
                     }
