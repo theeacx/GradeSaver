@@ -147,8 +147,20 @@ class CoursesExpandableListAdapter(private val context: Context,
     private fun refreshData() {
         scope.launch {
             val updatedCourses = AppDatabase.getInstance(context).appDao().getCoursesByProfessor(professorId)
+            val updatedCourseDetails = HashMap<String, List<Activity>>()
+
+            // Fetching activities for each updated course
+            for (course in updatedCourses) {
+                val activities = AppDatabase.getInstance(context).appDao().getActivitiesByCourse(course.courseId)
+                updatedCourseDetails[course.courseName] = activities
+            }
+
+            // Update the list and details map
             courseList.clear()
             courseList.addAll(updatedCourses)
+            courseDetails.clear()
+            courseDetails.putAll(updatedCourseDetails)
+
             withContext(Dispatchers.Main) {
                 notifyDataSetChanged()
             }
