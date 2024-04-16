@@ -1,25 +1,35 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="horizontal" android:layout_width="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="16dp">
+    android:gravity="center_vertical"
+    android:paddingLeft="50dp">
+
     <TextView
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
         android:id="@+id/activityName"
-        android:layout_weight="2"
-        android:text="Activity Name"
-        android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
-    <TextView
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_weight="2"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:paddingEnd="8dp" />
+
+    <TextView
         android:id="@+id/activityDueDate"
-        android:layout_weight="1"
-        android:text="Due Date"
-        android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
-    <ImageView
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_weight="2"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:gravity="end"
+        android:paddingEnd="8dp" />
+
+    <ImageView
         android:id="@+id/deleteActivity"
-        android:background="@drawable/baseline_trash"
-        android:contentDescription="@string/delete_activity" />
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:clickable="true"
+        android:contentDescription="@string/delete_activity"
+        android:focusable="true"
+        android:padding="12dp"
+        android:src="@drawable/baseline_trash" />
 </LinearLayout>
