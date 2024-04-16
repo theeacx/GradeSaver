@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
+import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,6 +13,7 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.example.gradesaver.AddActivityActivity
 import com.example.gradesaver.R
 import com.example.gradesaver.database.AppDatabase
 import com.example.gradesaver.database.entities.Course
@@ -87,6 +89,15 @@ class CoursesExpandableListAdapter(private val context: Context, private val cou
                 }
             }
         }
+        val addActivityIcon = convertView?.findViewById<ImageView>(R.id.ivAdd)
+        addActivityIcon?.setOnClickListener {
+            // Create an intent to start AddActivityActivity
+            val intent = Intent(context, AddActivityActivity::class.java)
+            // Pass the course ID as an extra
+            intent.putExtra("COURSE_ID", courseList[groupPosition].courseId)
+            context.startActivity(intent)
+        }
+
 
 
         return convertView!!

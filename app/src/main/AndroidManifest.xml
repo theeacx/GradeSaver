@@ -13,6 +13,9 @@
         android:theme="@style/Theme.GradeSaver"
         tools:targetApi="31">
         <activity
+            android:name=".AddActivityActivity"
+            android:exported="false" />
+        <activity
             android:name=".ProfessorCoursesActivity"
             android:exported="false" />
         <activity

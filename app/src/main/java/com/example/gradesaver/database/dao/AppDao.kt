@@ -40,7 +40,7 @@ interface AppDao {
     suspend fun getAllCourses(): List<Course>
 
     @Query("SELECT * FROM courses WHERE courseId = :courseId")
-    suspend fun getCourseById(courseId: Int): Course
+    suspend fun getCourseById(courseId: Int): Course?
 
     // Activities CRUD
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -112,4 +112,8 @@ interface AppDao {
 
     @Query("SELECT * FROM users WHERE email = :email LIMIT 1")
     suspend fun getUserByEmail(email: String): User?
+
+
+
+
 }

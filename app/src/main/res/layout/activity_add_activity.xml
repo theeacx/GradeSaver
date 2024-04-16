@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/background"
+    tools:context=".AddActivityActivity">
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardViewAddActivity"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="30dp"
+        app:cardCornerRadius="30dp"
+        app:cardElevation="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/tvAddActivityForCourse"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Add activity for course: [Course Name]"
+                android:textAlignment="center"
+                android:textColor="@color/purple"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <EditText
+                android:id="@+id/etActivityName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:hint="Activity Name"
+                android:inputType="text"
+                android:minHeight="48dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvAddActivityForCourse" />
+
+            <TextView
+                android:id="@+id/tvPickActivityType"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Pick activity type:"
+                android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+                android:textColor="@color/purple"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/etActivityName" />
+
+            <RadioGroup
+                android:id="@+id/radioGroupActivityType"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="8dp"
+                app:layout_constraintTop_toBottomOf="@id/tvPickActivityType"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <RadioButton android:id="@+id/rbTest"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Test"/>
+
+                <RadioButton android:id="@+id/rbMidtermExam"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Midterm Exam"/>
+
+                <RadioButton android:id="@+id/rbEssay"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Essay"/>
+
+                <RadioButton android:id="@+id/rbExam"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Exam"/>
+
+                <RadioButton android:id="@+id/rbPresentation"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Presentation"/>
+
+                <RadioButton android:id="@+id/rbProject"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Project"/>
+            </RadioGroup>
+
+            <Button
+                android:id="@+id/btnAddDeadline"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Add Deadline"
+                app:layout_constraintTop_toBottomOf="@id/radioGroupActivityType"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/gap"
+                app:layout_constraintWidth_default="percent"
+                app:layout_constraintWidth_percent="0.45"
+                app:layout_constraintHorizontal_chainStyle="packed"
+                android:layout_marginTop="24dp"/>
+
+            <View
+                android:id="@+id/gap"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                app:layout_constraintBottom_toTopOf="@+id/tvAddActivityForCourse"
+                app:layout_constraintEnd_toStartOf="@+id/btnAddActivity"
+                app:layout_constraintStart_toEndOf="@+id/btnAddDeadline"
+                app:layout_constraintWidth_default="percent"
+                app:layout_constraintWidth_percent="0.1" />
+
+            <Button
+                android:id="@+id/btnAddActivity"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Add Activity"
+                app:layout_constraintTop_toBottomOf="@id/radioGroupActivityType"
+                app:layout_constraintStart_toEndOf="@+id/gap"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintWidth_default="percent"
+                app:layout_constraintWidth_percent="0.45"
+                android:layout_marginTop="24dp"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.cardview.widget.CardView>
+</androidx.constraintlayout.widget.ConstraintLayout>
