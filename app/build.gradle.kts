@@ -79,4 +79,5 @@ dependencies {
 
   //material components
     implementation("androidx.compose.material:material:1.6.4")
+    implementation ("com.github.PhilJay:MPAndroidChart:v3.1.0")
 }
