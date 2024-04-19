@@ -20,5 +20,13 @@ class StudentMainScreenActivity : AppCompatActivity() {
             }
             startActivity(intent)
         }
+
+        val fabTwo: FloatingActionButton = findViewById(R.id.fabTwo)
+        fabTwo.setOnClickListener {
+            val intent = Intent(this, StudentsCourseActivity::class.java).apply {
+                putExtra("USER_DETAILS", user)
+            }
+            startActivity(intent)
+        }
     }
 }

@@ -2,4 +2,10 @@
     <string name="app_name">GradeSaver</string>
     <string name="add_activity_for_course">Add activity for course: %1$s</string>
     <string name="delete_activity">bla</string>
+    <string-array name="course_filters">
+        <item>All</item>
+        <item>Soon</item>
+        <item>With Reminders</item>
+        <item>Without Reminders</item>
+    </string-array>
 </resources>
