@@ -7,5 +7,6 @@
         <item>Soon</item>
         <item>With Reminders</item>
         <item>Without Reminders</item>
+        <item>Past Deadline</item>
     </string-array>
 </resources>

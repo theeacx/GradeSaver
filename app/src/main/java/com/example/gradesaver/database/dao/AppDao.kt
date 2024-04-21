@@ -116,4 +116,5 @@ interface AppDao {
     @Query("SELECT * FROM activities WHERE courseId = :courseId")
     suspend fun getActivitiesByCourse(courseId: Int): List<Activity>
 
+
 }

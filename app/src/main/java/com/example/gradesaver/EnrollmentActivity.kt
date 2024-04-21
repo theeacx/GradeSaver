@@ -7,6 +7,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
 import com.example.gradesaver.database.AppDatabase
 import com.example.gradesaver.database.entities.Course
@@ -16,8 +17,13 @@ import kotlinx.coroutines.launch
 
 class EnrollmentActivity : AppCompatActivity() {
     private lateinit var db: AppDatabase
+    private lateinit var professorEmailAutocomplete: AutoCompleteTextView
+    private lateinit var courseNameAutocomplete: AutoCompleteTextView
     private lateinit var professorAdapter: ArrayAdapter<String>
     private lateinit var courseAdapter: ArrayAdapter<String>
+    private var professors: List<User> = listOf()
+    private var availableCourses: List<Course> = listOf()
+    private var selectedProfessorId: Int? = null
     private var selectedCourseId: Int? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,41 +34,46 @@ class EnrollmentActivity : AppCompatActivity() {
         val studentId = user?.userId ?: throw IllegalStateException("Student ID must be provided")
 
         db = AppDatabase.getInstance(this)
+        professorEmailAutocomplete = findViewById(R.id.professorEmailAutocomplete)
+        courseNameAutocomplete = findViewById(R.id.courseNameAutocomplete)
+
         setupProfessorAutocomplete(studentId)
         setupListeners(studentId)
     }
 
     private fun setupProfessorAutocomplete(studentId: Int) {
-        val professorEmailAutocomplete = findViewById<AutoCompleteTextView>(R.id.professorEmailAutocomplete)
         lifecycleScope.launch {
-            val professors = db.appDao().getAllUsers().filter { it.role == "Professor" }
+            professors = db.appDao().getAllUsers().filter { it.role == "Professor" }
             val emails = professors.map { it.email }
             professorAdapter = ArrayAdapter(this@EnrollmentActivity, android.R.layout.simple_dropdown_item_1line, emails)
-            professorEmailAutocomplete.setAdapter(professorAdapter)
-            professorEmailAutocomplete.setOnClickListener {
-                professorEmailAutocomplete.showDropDown()
-            }
-            professorEmailAutocomplete.setOnItemClickListener { _, _, position, _ ->
-                val selectedProfessor = professors[position]
-                setupCourseAutocomplete(selectedProfessor.userId, studentId)
+            professorEmailAutocomplete.apply {
+                setAdapter(professorAdapter)
+                setOnClickListener { showDropDown() }
+                addTextChangedListener { text ->
+                    val matchingProf = professors.find { it.email == text.toString() }
+                    selectedProfessorId = matchingProf?.userId
+                    if (selectedProfessorId != null) {
+                        setupCourseAutocomplete(selectedProfessorId!!, studentId)
+                    }
+                }
             }
         }
     }
 
     private fun setupCourseAutocomplete(professorId: Int, studentId: Int) {
-        val courseNameAutocomplete = findViewById<AutoCompleteTextView>(R.id.courseNameAutocomplete)
         lifecycleScope.launch {
             val allCourses = db.appDao().getCoursesByProfessor(professorId)
             val enrolledCourses = db.appDao().getEnrollmentsByStudent(studentId).map { it.courseId }
-            val availableCourses = allCourses.filterNot { it.courseId in enrolledCourses }
-            val courseNames = availableCourses.map(Course::courseName)
+            availableCourses = allCourses.filterNot { it.courseId in enrolledCourses }
+            val courseNames = availableCourses.map { it.courseName }
             courseAdapter = ArrayAdapter(this@EnrollmentActivity, android.R.layout.simple_dropdown_item_1line, courseNames)
-            courseNameAutocomplete.setAdapter(courseAdapter)
-            courseNameAutocomplete.setOnClickListener {
-                courseNameAutocomplete.showDropDown()
-            }
-            courseNameAutocomplete.setOnItemClickListener { _, _, position, _ ->
-                selectedCourseId = availableCourses[position].courseId
+            courseNameAutocomplete.apply {
+                setAdapter(courseAdapter)
+                setOnClickListener { showDropDown() }
+                addTextChangedListener { text ->
+                    val matchingCourse = availableCourses.find { it.courseName == text.toString() }
+                    selectedCourseId = matchingCourse?.courseId
+                }
             }
         }
     }
@@ -70,9 +81,11 @@ class EnrollmentActivity : AppCompatActivity() {
     private fun setupListeners(studentId: Int) {
         findViewById<Button>(R.id.confirmEnrollmentButton).setOnClickListener {
             val enrollmentCode = findViewById<EditText>(R.id.enrollmentCodeEditText).text.toString()
-            selectedCourseId?.let {
-                attemptEnrollment(it, studentId, enrollmentCode)
-            } ?: Toast.makeText(this, "Select a course first", Toast.LENGTH_SHORT).show()
+            if (selectedCourseId != null) {
+                attemptEnrollment(selectedCourseId!!, studentId, enrollmentCode)
+            } else {
+                Toast.makeText(this, "No valid course selected or input does not match", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
