@@ -116,5 +116,36 @@ interface AppDao {
     @Query("SELECT * FROM activities WHERE courseId = :courseId")
     suspend fun getActivitiesByCourse(courseId: Int): List<Activity>
 
+    // Activities filters
+    @Query("SELECT * FROM activities WHERE courseId = :courseId AND activityId IN (SELECT activityId FROM reminderSchedules)")
+    suspend fun getActivitiesWithRemindersByCourse(courseId: Int): List<Activity>
+
+    @Query("SELECT * FROM activities WHERE courseId = :courseId AND activityId NOT IN (SELECT activityId FROM reminderSchedules)")
+    suspend fun getActivitiesWithoutRemindersByCourse(courseId: Int): List<Activity>
+
+    // Get activities due within the next 7 days
+    @Query("""
+        SELECT * FROM activities 
+        WHERE courseId = :courseId AND 
+        dueDate BETWEEN :start AND :end
+    """)
+    suspend fun getUpcomingActivitiesByCourse(courseId: Int, start: Date, end: Date): List<Activity>
+
+    // Get past deadline activities
+    @Query("""
+        SELECT * FROM activities 
+        WHERE courseId = :courseId AND 
+        dueDate < :currentDate
+    """)
+    suspend fun getPastDeadlineActivitiesByCourse(courseId: Int, currentDate: Date): List<Activity>
+
+    @Transaction
+    @Query("""
+    SELECT r.* FROM reminders r
+    INNER JOIN reminderSchedules rs ON r.reminderScheduleId = rs.reminderScheduleId
+    WHERE rs.activityId = :activityId
+""")
+    suspend fun getRemindersByActivity(activityId: Int): List<Reminder>
+
 
 }

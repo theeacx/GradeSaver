@@ -24,7 +24,7 @@ class StudentCoursesExpandableListAdapter(
 
     override fun getGroup(groupPosition: Int) = filteredCourses[groupPosition]
 
-    override fun getChild(groupPosition: Int, childPosition: Int) = details[filteredCourses[groupPosition]]!![childPosition]
+    override fun getChild(groupPosition: Int, childPosition: Int) = details[filteredCourses[groupPosition]]?.get(childPosition) ?: throw IllegalStateException("Activity not found")
 
     override fun getGroupId(groupPosition: Int) = groupPosition.toLong()
 
@@ -57,11 +57,13 @@ class StudentCoursesExpandableListAdapter(
     }
 
     fun updateData(newCourses: MutableList<Course>, newDetails: MutableMap<Course, List<Activity>>) {
-        allCourses = newCourses
-        filteredCourses = newCourses
-        details = newDetails
-        notifyDataSetChanged()  // Notify the adapter to refresh the views
+        allCourses.clear()
+        allCourses.addAll(newCourses)
+        details.clear()
+        details.putAll(newDetails)
+        notifyDataSetChanged()
     }
+
 
     override fun getFilter(): Filter {
         return object : Filter() {
@@ -82,7 +84,7 @@ class StudentCoursesExpandableListAdapter(
 
             @Suppress("UNCHECKED_CAST")
             override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
-                filteredCourses = results?.values as MutableList<Course>
+                filteredCourses = results?.values as? MutableList<Course> ?: mutableListOf()
                 notifyDataSetChanged()
             }
         }
