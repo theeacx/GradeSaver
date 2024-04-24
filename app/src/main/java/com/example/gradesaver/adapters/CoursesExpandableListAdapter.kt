@@ -188,7 +188,8 @@ class CoursesExpandableListAdapter(private val context: Context,
         val activity = getChild(groupPosition, childPosition) as Activity
         convertView?.findViewById<TextView>(R.id.activityName)?.text = activity.activityName
         convertView?.findViewById<TextView>(R.id.activityDueDate)?.text =
-            SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(activity.dueDate)
+            SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(activity.dueDate)
+
 
         val deleteActivityIcon = convertView?.findViewById<ImageView>(R.id.deleteActivity)
         deleteActivityIcon?.setOnClickListener {

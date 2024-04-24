@@ -1,6 +1,7 @@
 package com.example.gradesaver
 
 import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
@@ -21,13 +22,12 @@ import java.util.Date
 import java.util.Locale
 
 class AddActivityActivity : AppCompatActivity() {
-    private lateinit var database: AppDatabase // Instance of the database
-    private var selectedDeadline: Date? = null // Define the variable here
+    private lateinit var database: AppDatabase
+    private var selectedDeadline: Date? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_activity)
-        // Initialize the database instance
         database = AppDatabase.getInstance(this)
 
         val courseId = intent.getIntExtra("COURSE_ID", -1)
@@ -48,57 +48,49 @@ class AddActivityActivity : AppCompatActivity() {
 
     private fun showDatePicker() {
         val calendar = Calendar.getInstance()
-        val year = calendar.get(Calendar.YEAR)
-        val month = calendar.get(Calendar.MONTH)
-        val day = calendar.get(Calendar.DAY_OF_MONTH)
+        DatePickerDialog(this, R.style.PurpleDatePickerDialog, { _, year, month, dayOfMonth ->
+            calendar.set(year, month, dayOfMonth)
+            showTimePicker(calendar)
+        }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show()
+    }
 
-        val datePickerDialog = DatePickerDialog(this, { _, selectedYear, selectedMonth, selectedDay ->
-            calendar.set(selectedYear, selectedMonth, selectedDay)
-            selectedDeadline = calendar.time  // Set the selectedDeadline variable
+    private fun showTimePicker(calendar: Calendar) {
+        TimePickerDialog(this, R.style.PurpleTimePickerDialog, { _, hourOfDay, minute ->
+            calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
+            calendar.set(Calendar.MINUTE, minute)
+            selectedDeadline = calendar.time
             val btnAddDeadline: Button = findViewById(R.id.btnAddDeadline)
-            // Use Romanian Locale for formatting the date
-            btnAddDeadline.text = SimpleDateFormat("MMM dd, yyyy", Locale("ro", "RO")).format(selectedDeadline)
-        }, year, month, day)
-        datePickerDialog.show()
+            btnAddDeadline.text = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale("ro", "RO")).format(selectedDeadline)
+        }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true).show()
     }
 
     private fun validateAndAddActivity() {
         val etActivityName: EditText = findViewById(R.id.etActivityName)
         val activityName = etActivityName.text.toString().trim()
-
         val radioGroupActivityType: RadioGroup = findViewById(R.id.radioGroupActivityType)
         val selectedTypeId = radioGroupActivityType.checkedRadioButtonId
         val radioButton = findViewById<RadioButton>(selectedTypeId)
         val selectedActivityType = radioButton?.text.toString()
 
-        if (activityName.isEmpty()) {
-            Toast.makeText(this, "Please enter an activity name.", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        if (selectedTypeId == -1) {
-            Toast.makeText(this, "Please select an activity type.", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        if (selectedDeadline == null) {
-            Toast.makeText(this, "Please add a deadline.", Toast.LENGTH_SHORT).show()
+        if (activityName.isEmpty() || selectedTypeId == -1 || selectedDeadline == null) {
+            Toast.makeText(this, "Please complete all fields.", Toast.LENGTH_SHORT).show()
             return
         }
 
         val courseId = intent.getIntExtra("COURSE_ID", -1)
-        if (courseId == -1) {
+        if (courseId != -1) {
+            addActivityToDatabase(activityName, selectedActivityType, selectedDeadline!!, courseId)
+            finish()
+        } else {
             Toast.makeText(this, "Invalid course ID.", Toast.LENGTH_SHORT).show()
-            return
         }
-
-        // If all validations are passed, add the activity to the database
-        addActivityToDatabase(activityName, selectedActivityType, selectedDeadline!!, courseId)
-        finish() // Closes this activity and returns to the previous one
     }
+
     private fun addActivityToDatabase(activityName: String, activityType: String, deadline: Date, courseId: Int) {
         lifecycleScope.launch(Dispatchers.IO) {
+            // You must ensure that the Activity class has a constructor that accepts these parameters.
             val newActivity = Activity(
+                activityId = 0, // Assuming autoGenerate is true, you can pass 0 for a new entry
                 courseId = courseId,
                 activityName = activityName,
                 activityType = activityType,
@@ -108,24 +100,18 @@ class AddActivityActivity : AppCompatActivity() {
         }
     }
 
+
     private fun fetchCourseAndSetCourseName(courseId: Int) {
-        // Using lifecycleScope to launch a coroutine which ensures the coroutine is canceled when the lifecycle is destroyed.
         lifecycleScope.launch {
-            // Switching to the IO dispatcher for database operations
             val course = withContext(Dispatchers.IO) {
-                // Fetch course from the database using the provided courseId
                 database.appDao().getCourseById(courseId)
             }
-
-            // Back on the main thread to update the UI
-            if (course != null) {
-                // Successfully retrieved the course, update the TextView
+            course?.let {
                 val tvAddActivityForCourse: TextView = findViewById(R.id.tvAddActivityForCourse)
-                tvAddActivityForCourse.text = getString(R.string.add_activity_for_course, course.courseName)
-            } else {
-                // Course not found, handle this case possibly by showing a Toast or finishing the activity
+                tvAddActivityForCourse.text = getString(R.string.add_activity_for_course, it.courseName)
+            } ?: run {
                 Toast.makeText(this@AddActivityActivity, "Course not found", Toast.LENGTH_LONG).show()
-                finish() // Optionally finish the activity if the course is critical to further operations
+                finish()
             }
         }
     }

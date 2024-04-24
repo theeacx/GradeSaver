@@ -12,6 +12,8 @@ import android.widget.TextView
 import com.example.gradesaver.R
 import com.example.gradesaver.database.entities.Activity
 import com.example.gradesaver.database.entities.Course
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class StudentCoursesExpandableListAdapter(
     private val context: Context,
@@ -50,9 +52,11 @@ class StudentCoursesExpandableListAdapter(
 
     override fun getChildView(groupPosition: Int, childPosition: Int, isLastChild: Boolean, convertView: View?, parent: ViewGroup?): View {
         val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.student_child_item, parent, false)
-        val activity = getChild(groupPosition, childPosition)
+        val activity = getChild(groupPosition, childPosition) as Activity
+        val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
         view.findViewById<TextView>(R.id.activityName).text = activity.activityName
-        view.findViewById<TextView>(R.id.activityDueDate).text = activity.dueDate.toString() // Format date appropriately
+        // Use the dateFormat to format the Date object into a String
+        view.findViewById<TextView>(R.id.activityDueDate).text = dateFormat.format(activity.dueDate)
         return view
     }
 

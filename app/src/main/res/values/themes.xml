@@ -11,4 +11,28 @@
         <item name="backgroundTint">@color/purple</item>
     </style>
     <style name="Theme.GradeSaver" parent="Base.Theme.GradeSaver" />
+
+    <style name="PurpleDatePickerDialog" parent="ThemeOverlay.MaterialComponents.Dialog">
+        <!-- Customize the colorAccent which affects the DatePicker header and the 'OK'/'Cancel' buttons -->
+        <item name="colorAccent">@color/purple</item>
+        <!-- For Android API 21 and above, you can directly set the background color -->
+        <item name="android:datePickerDialogTheme">@style/PurpleDatePickerTheme</item>
+    </style>
+
+    <style name="PurpleDatePickerTheme" parent="ThemeOverlay.MaterialComponents.MaterialCalendar">
+        <item name="colorAccent">@color/purple</item>
+        <!-- Customize other properties like text color if needed -->
+    </style>
+
+    <style name="PurpleTimePickerDialog" parent="ThemeOverlay.MaterialComponents.Dialog">
+        <item name="colorAccent">@color/purple</item>
+        <!-- For Android API 21 and above, you can directly set the background color -->
+        <item name="android:timePickerDialogTheme">@style/PurpleTimePickerTheme</item>
+    </style>
+
+    <style name="PurpleTimePickerTheme" parent="ThemeOverlay.MaterialComponents.TimePicker">
+        <item name="colorAccent">@color/purple</item>
+        <!-- Customize other properties like text color if needed -->
+    </style>
+
 </resources>
