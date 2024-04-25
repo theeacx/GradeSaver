@@ -52,7 +52,7 @@ class StudentsCourseActivity : AppCompatActivity() {
     }
 
     private fun setupAdapter() {
-        adapter = StudentCoursesExpandableListAdapter(this, mutableListOf(), mutableMapOf()) { course ->
+        adapter = StudentCoursesExpandableListAdapter(this,user, mutableListOf(), mutableMapOf()) { course ->
             onDeleteCourse(course)
         }
         expandableListView.setAdapter(adapter)

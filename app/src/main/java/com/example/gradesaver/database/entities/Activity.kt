@@ -2,7 +2,8 @@ package com.example.gradesaver.database.entities
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
-import java.util.*
+import java.io.Serializable
+import java.util.Date
 @Entity(
     tableName = "activities",
     foreignKeys = [ForeignKey(
@@ -18,4 +19,4 @@ data class Activity(
     val activityName: String,
     val activityType: String,
     val dueDate: Date
-)
+): Serializable

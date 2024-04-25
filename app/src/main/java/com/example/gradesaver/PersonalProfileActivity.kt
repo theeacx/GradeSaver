@@ -61,7 +61,7 @@ class PersonalProfileActivity : AppCompatActivity() {
             // Perform any other logout operations you might need here, like clearing shared preferences or tokens
 
             // Now navigate back to the login screen or any other appropriate screen
-            val intent = Intent(this, MainActivity::class.java)
+            val intent = Intent(this, LoginActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)
             finish() // This call is to destroy the current activity

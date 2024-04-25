@@ -55,7 +55,7 @@ class SignUpActivity : AppCompatActivity() {
                             AppDatabase.getInstance(this@SignUpActivity).appDao().insertUser(newUser)
                             Toast.makeText(this@SignUpActivity, "Sign up successful! Please login.", Toast.LENGTH_SHORT).show()
                             // Intent to go back to the login screen
-                            val loginIntent = Intent(this@SignUpActivity, MainActivity::class.java)
+                            val loginIntent = Intent(this@SignUpActivity, LoginActivity::class.java)
                             // These flags clear the back stack so the user can't navigate back to the signup screen with the back button
                             loginIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                             startActivity(loginIntent)

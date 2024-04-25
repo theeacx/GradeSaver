@@ -13,14 +13,14 @@ import com.example.gradesaver.database.dao.AppDao
 import com.example.gradesaver.security.Hash.Companion.toSHA256
 import kotlinx.coroutines.launch
 
-class MainActivity : AppCompatActivity() {
+class LoginActivity : AppCompatActivity() {
     lateinit var username : EditText
     lateinit var password: EditText
     lateinit var loginButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_login)
 
         loginButton = findViewById(R.id.loginButton)
         username = findViewById(R.id.username)
@@ -56,14 +56,14 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 nextActivity?.let {
-                    val intent = Intent(this@MainActivity, it)
+                    val intent = Intent(this@LoginActivity, it)
                     intent.putExtra("USER_DETAILS", user)
                     startActivity(intent)
                 } ?: run {
-                    Toast.makeText(this@MainActivity, "Invalid user role.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@LoginActivity, "Invalid user role.", Toast.LENGTH_SHORT).show()
                 }
             } else {
-                Toast.makeText(this@MainActivity, "Login Failed! Please sign up!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@LoginActivity, "Login Failed! Please sign up!", Toast.LENGTH_SHORT).show()
             }
         }
     }

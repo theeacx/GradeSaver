@@ -1,6 +1,7 @@
 package com.example.gradesaver.adapters
 
 import android.content.Context
+import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,14 +10,17 @@ import android.widget.Filter
 import android.widget.Filterable
 import android.widget.ImageView
 import android.widget.TextView
+import com.example.gradesaver.AddRemindersActivity
 import com.example.gradesaver.R
 import com.example.gradesaver.database.entities.Activity
 import com.example.gradesaver.database.entities.Course
+import com.example.gradesaver.database.entities.User
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 class StudentCoursesExpandableListAdapter(
     private val context: Context,
+    private val user: User,
     private var allCourses: MutableList<Course>, // Holds all courses
     private var details: MutableMap<Course, List<Activity>>,
     private val onDeleteCourse: (Course) -> Unit
@@ -54,9 +58,20 @@ class StudentCoursesExpandableListAdapter(
         val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.student_child_item, parent, false)
         val activity = getChild(groupPosition, childPosition) as Activity
         val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+
         view.findViewById<TextView>(R.id.activityName).text = activity.activityName
-        // Use the dateFormat to format the Date object into a String
         view.findViewById<TextView>(R.id.activityDueDate).text = dateFormat.format(activity.dueDate)
+
+        // Setup the addReminders ImageView click listener
+        view.findViewById<ImageView>(R.id.addReminders).setOnClickListener {
+            // Create the intent to start AddRemindersActivity
+            val intent = Intent(context, AddRemindersActivity::class.java).apply {
+                // Put extra details about the user and the activity
+                putExtra("USER_DETAILS", user)  // Ensure user is serializable or pass user ID
+                putExtra("ACTIVITY", activity)
+            }
+            context.startActivity(intent)
+        }
         return view
     }
 

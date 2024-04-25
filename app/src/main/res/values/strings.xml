@@ -9,4 +9,10 @@
         <item>Without Reminders</item>
         <item>Past Deadline</item>
     </string-array>
+    <string-array name="reminder_types">
+        <item>Daily</item>
+        <item>Weekly</item>
+        <item>Monthly</item>
+        <item>Custom</item>
+    </string-array>
 </resources>
