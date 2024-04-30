@@ -2,7 +2,7 @@ package com.example.gradesaver.database.entities
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
-import java.util.*
+import java.util.Date
 @Entity(
     tableName = "reminderSchedules",
     foreignKeys = [
@@ -21,7 +21,7 @@ import java.util.*
     ]
 )
 data class ReminderSchedule(
-    @PrimaryKey(autoGenerate = true) val reminderScheduleId: Int = 0,
+    @PrimaryKey(autoGenerate = true) var reminderScheduleId: Int = 0,
     val activityId: Int,
     val studentId: Int,
     val reminderType: String,

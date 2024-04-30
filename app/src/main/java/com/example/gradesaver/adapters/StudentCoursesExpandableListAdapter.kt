@@ -12,10 +12,16 @@ import android.widget.ImageView
 import android.widget.TextView
 import com.example.gradesaver.AddRemindersActivity
 import com.example.gradesaver.R
+import com.example.gradesaver.database.AppDatabase
 import com.example.gradesaver.database.entities.Activity
 import com.example.gradesaver.database.entities.Course
 import com.example.gradesaver.database.entities.User
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 class StudentCoursesExpandableListAdapter(
@@ -23,7 +29,8 @@ class StudentCoursesExpandableListAdapter(
     private val user: User,
     private var allCourses: MutableList<Course>, // Holds all courses
     private var details: MutableMap<Course, List<Activity>>,
-    private val onDeleteCourse: (Course) -> Unit
+    private val onDeleteCourse: (Course) -> Unit,
+    private val coroutineScope: CoroutineScope
 ) : BaseExpandableListAdapter(), Filterable {
 
     private var filteredCourses = allCourses // Initially, all courses are shown
@@ -56,24 +63,38 @@ class StudentCoursesExpandableListAdapter(
 
     override fun getChildView(groupPosition: Int, childPosition: Int, isLastChild: Boolean, convertView: View?, parent: ViewGroup?): View {
         val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.student_child_item, parent, false)
-        val activity = getChild(groupPosition, childPosition) as Activity
+        val activity = getChild(groupPosition, childPosition)
         val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
-
+        val currentDate = Date()
         view.findViewById<TextView>(R.id.activityName).text = activity.activityName
         view.findViewById<TextView>(R.id.activityDueDate).text = dateFormat.format(activity.dueDate)
 
-        // Setup the addReminders ImageView click listener
-        view.findViewById<ImageView>(R.id.addReminders).setOnClickListener {
-            // Create the intent to start AddRemindersActivity
-            val intent = Intent(context, AddRemindersActivity::class.java).apply {
-                // Put extra details about the user and the activity
-                putExtra("USER_DETAILS", user)  // Ensure user is serializable or pass user ID
-                putExtra("ACTIVITY", activity)
+        val imageView = view.findViewById<ImageView>(R.id.addReminders)
+
+
+
+        coroutineScope.launch(Dispatchers.IO) {
+            val hasReminders = AppDatabase.getInstance(context).appDao().getRemindersByActivity(activity.activityId).isNotEmpty()
+            withContext(Dispatchers.Main) {
+                if (activity.dueDate.after(currentDate) && !hasReminders) {
+                    imageView.visibility = View.VISIBLE
+                    imageView.setOnClickListener {
+                        val intent = Intent(context, AddRemindersActivity::class.java).apply {
+                            putExtra("USER_DETAILS", user)  // Ensure user is serializable or pass user ID
+                            putExtra("ACTIVITY", activity)
+                        }
+                        context.startActivity(intent)
+                    }
+                } else {
+                    imageView.visibility = View.INVISIBLE
+                }
             }
-            context.startActivity(intent)
         }
         return view
     }
+
+
+
 
     fun updateData(newCourses: MutableList<Course>, newDetails: MutableMap<Course, List<Activity>>) {
         allCourses.clear()

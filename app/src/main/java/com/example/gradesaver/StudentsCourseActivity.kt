@@ -52,11 +52,20 @@ class StudentsCourseActivity : AppCompatActivity() {
     }
 
     private fun setupAdapter() {
-        adapter = StudentCoursesExpandableListAdapter(this,user, mutableListOf(), mutableMapOf()) { course ->
-            onDeleteCourse(course)
-        }
-        expandableListView.setAdapter(adapter)
+        adapter = StudentCoursesExpandableListAdapter(
+            context = this,                 // Context
+            user = user,                    // User instance
+            allCourses = mutableListOf(),   // Initially empty list of courses
+            details = mutableMapOf(),       // Initially empty map of course details
+            onDeleteCourse = { course ->    // Lambda for deleting a course
+                onDeleteCourse(course)
+            },
+            coroutineScope = lifecycleScope // Passing lifecycle scope
+        )
+        //expandableListView.adapter = adapter // Setting the adapter to the ExpandableListView
+        expandableListView.setAdapter(adapter);
     }
+
 
     private fun setupSpinner() {
         val spinner: Spinner = findViewById(R.id.courseFilterSpinner)

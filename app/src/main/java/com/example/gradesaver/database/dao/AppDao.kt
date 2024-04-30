@@ -70,7 +70,9 @@ interface AppDao {
 
     // ReminderSchedules CRUD
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertReminderSchedule(reminderSchedule: ReminderSchedule)
+    suspend fun insertReminderSchedule(reminderSchedule: ReminderSchedule): Long
+
+
 
     @Update
     suspend fun updateReminderSchedule(reminderSchedule: ReminderSchedule)
@@ -83,7 +85,7 @@ interface AppDao {
 
     // Reminders CRUD
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertReminder(reminder: Reminder)
+    suspend fun insertReminder(reminder: Reminder): Long
 
     @Delete
     suspend fun deleteReminder(reminder: Reminder)
@@ -147,5 +149,7 @@ interface AppDao {
 """)
     suspend fun getRemindersByActivity(activityId: Int): List<Reminder>
 
+    @Query("SELECT * FROM reminderSchedules WHERE studentId = :userId AND activityId = :activityId ORDER BY reminderScheduleId DESC LIMIT 1")
+    suspend fun getLatestReminderScheduleForUser(userId: Int, activityId: Int): ReminderSchedule?
 
 }
