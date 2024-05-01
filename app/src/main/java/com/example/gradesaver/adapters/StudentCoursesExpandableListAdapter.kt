@@ -11,6 +11,7 @@ import android.widget.Filterable
 import android.widget.ImageView
 import android.widget.TextView
 import com.example.gradesaver.AddRemindersActivity
+import com.example.gradesaver.ManageRemindersActivity
 import com.example.gradesaver.R
 import com.example.gradesaver.database.AppDatabase
 import com.example.gradesaver.database.entities.Activity
@@ -71,7 +72,14 @@ class StudentCoursesExpandableListAdapter(
 
         val imageView = view.findViewById<ImageView>(R.id.addReminders)
 
-
+        val info = view.findViewById<ImageView>(R.id.ivInfo);
+        info.setOnClickListener {
+            val intent = Intent(context, ManageRemindersActivity::class.java).apply {
+                putExtra("USER_DETAILS", user)  // Ensure user is serializable or pass user ID
+                putExtra("ACTIVITY", activity)
+            }
+            context.startActivity(intent)
+        }
 
         coroutineScope.launch(Dispatchers.IO) {
             val hasReminders = AppDatabase.getInstance(context).appDao().getRemindersByActivity(activity.activityId).isNotEmpty()

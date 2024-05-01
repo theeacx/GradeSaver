@@ -15,6 +15,9 @@
         android:theme="@style/Theme.GradeSaver"
         tools:targetApi="31">
         <activity
+            android:name=".ManageRemindersActivity"
+            android:exported="false" />
+        <activity
             android:name=".AddRemindersActivity"
             android:exported="false" />
         <activity
