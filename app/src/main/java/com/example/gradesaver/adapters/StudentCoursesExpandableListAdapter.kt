@@ -113,6 +113,7 @@ class StudentCoursesExpandableListAdapter(
     }
 
 
+
     override fun getFilter(): Filter {
         return object : Filter() {
             override fun performFiltering(constraint: CharSequence?): FilterResults {
