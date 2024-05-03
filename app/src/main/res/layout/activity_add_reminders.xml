@@ -32,6 +32,16 @@
                 android:textColor="@color/purple"
                 android:gravity="center"/>
 
+            <TextView
+                android:id="@+id/reminderType"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Choose reminder type"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/purple"
+                android:gravity="start"/>
+
             <Spinner
                 android:id="@+id/reminderTypeSpinner"
                 android:layout_width="match_parent"
@@ -49,6 +59,20 @@
                 android:visibility="gone"
                 android:layout_marginTop="10dp"
                 android:minHeight="48dp"/>
+            <TextView
+                android:id="@+id/reminderTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Set a time"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/purple"
+                android:gravity="start"/>
+            <TimePicker
+                android:id="@+id/timePicker"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:timePickerMode="spinner"/>
 
             <EditText
                 android:id="@+id/messageField"
