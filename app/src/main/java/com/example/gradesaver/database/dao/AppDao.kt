@@ -152,4 +152,6 @@ interface AppDao {
     @Query("SELECT * FROM reminderSchedules WHERE studentId = :userId AND activityId = :activityId ORDER BY reminderScheduleId DESC LIMIT 1")
     suspend fun getLatestReminderScheduleForUser(userId: Int, activityId: Int): ReminderSchedule?
 
+    @Update
+    suspend fun updateReminder(reminder: Reminder)
 }

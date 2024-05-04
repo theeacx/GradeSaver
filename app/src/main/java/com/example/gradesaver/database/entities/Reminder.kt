@@ -16,5 +16,5 @@ data class Reminder(
     @PrimaryKey(autoGenerate = true) val reminderId: Int = 0,
     val reminderScheduleId: Int,
     val reminderDate: Date,
-    val reminderMessage: String?
+    var reminderMessage: String?
 )

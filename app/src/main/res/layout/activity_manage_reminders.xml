@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -8,13 +7,16 @@
     android:orientation="vertical"
     android:gravity="center"
     android:background="@drawable/background"
-    tools:context=".LoginActivity">
+    tools:context=".ManageRemindersActivity">
+
+
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="30dp"
         app:cardCornerRadius="30dp"
         app:cardElevation="20dp">
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -23,109 +25,86 @@
             android:padding="24dp"
             android:background="@drawable/custom_edittext">
 
-            <!-- Title: Manage reminders for activity -->
             <TextView
+                android:id="@+id/activityNameTextView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Manage reminders for activity"
-                android:id="@+id/titleText"
+                android:gravity="center"
+                android:text="Reminders for [Activity Name]"
+                android:textColor="@color/purple"
                 android:textSize="24sp"
-                android:textAlignment="center"
-                android:textStyle="bold"
-                android:textColor="@color/purple"/>
+                android:textStyle="bold" />
 
-            <!-- Small TextView: Manage reminder schedule -->
             <TextView
+                android:id="@+id/scheduleTextView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Manage reminder schedule"
-                android:textSize="18sp"
-                android:gravity="left"
-                android:paddingBottom="8dp"
-                android:textColor="@color/purple"/>
+                android:layout_marginTop="20dp"
+                android:text="The chosen schedule is: [Schedule Type]"
+                android:textSize="18sp" />
 
-            <!-- Inner CardView for Reminder Schedule -->
-            <androidx.cardview.widget.CardView
+            <TextView
+                android:id="@+id/numberOfRemindersTextView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="8dp"
-                app:cardCornerRadius="30dp"
-                app:cardElevation="6dp">
+                android:layout_marginTop="10dp"
+                android:text="Number of reminders: [Number of Reminders]"
+                android:visibility="gone" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
+            <!-- Button Container -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="20dp">
+
+                <Button
+                    android:id="@+id/updateScheduleButton"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp"
-                    android:background="@drawable/custom_edittext">
+                    android:layout_weight="1"
+                    android:text="Update Schedule"
+                    android:backgroundTint="@color/purple"/>
 
-                    <!-- TextView: The schedule is "blablabla" -->
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="The schedule is: "
-                        android:textSize="16sp"
-                        android:paddingBottom="8dp"/>
+                <Button
+                    android:id="@+id/deleteScheduleButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Delete Schedule"
+                    android:layout_marginStart="10dp"
+                    android:backgroundTint="@color/purple"/>
+            </LinearLayout>
 
-                    <!-- Update Schedule Button -->
-                    <Button
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Update Schedule"
-                        android:backgroundTint="@color/purple"
-                        android:layout_marginTop="8dp"
-                        app:cornerRadius = "20dp"/>
-
-                    <!-- Delete Schedule Button -->
-                    <Button
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Delete Schedule"
-                        android:backgroundTint="@color/purple"
-                        android:layout_marginTop="8dp"
-                        app:cornerRadius = "20dp"/>
-
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- TextView: Manage Reminders -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Manage reminders"
+                android:text="Reminders:"
                 android:textSize="18sp"
-                android:gravity="left"
-                android:paddingVertical="8dp"
-                android:textColor="@color/purple"/>
+                android:layout_marginTop="20dp"/>
 
-            <!-- Inner CardView for List of Reminders -->
-            <androidx.cardview.widget.CardView
+            <ListView
+                android:id="@+id/remindersListView"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:layout_marginTop="10dp" />
+
+            <EditText
+                android:id="@+id/reminderMessageEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="8dp"
-                app:cardCornerRadius="30dp"
-                app:cardElevation="6dp">
+                android:layout_marginTop="20dp"
+                android:hint="Reminder Message"
+                android:minHeight="48dp" />
 
-                <ListView
-                    android:id="@+id/listReminders"
-                    android:layout_width="match_parent"
-                    android:layout_height="208dp"
-                    android:padding="8dp"
-                    android:background="@drawable/custom_edittext"/>
-            </androidx.cardview.widget.CardView>
-
-            <!-- Button: Return to Courses -->
             <Button
+                android:id="@+id/returnButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="16dp"
+                android:text="Return"
+                android:layout_marginTop="20dp"
                 android:backgroundTint="@color/purple"
-                android:minHeight="48dp"
-                android:text="Return to Courses"
-                tools:ignore="TouchTargetSizeCheck"
-                app:cornerRadius = "20dp"/>
-
+                android:textColor="@android:color/white"/>
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 </LinearLayout>
