@@ -65,7 +65,11 @@ class ManageRemindersActivity : AppCompatActivity() {
         }
 
         updateButton.setOnClickListener {
-            // Handle schedule update
+            val updateIntent = Intent(this@ManageRemindersActivity, AddRemindersActivity::class.java).apply {
+                putExtra("ACTIVITY", activity)
+                putExtra("USER_DETAILS", user)
+            }
+            startActivity(updateIntent)
         }
 
         deleteButton.setOnClickListener {
@@ -118,5 +122,50 @@ class ManageRemindersActivity : AppCompatActivity() {
                 finish()  // Close the activity and return to previous screen
             }
         }
+    }
+    override fun onResume() {
+        super.onResume()
+        val activity = intent.getSerializableExtra("ACTIVITY") as Activity?
+        val user = intent.getSerializableExtra("USER_DETAILS") as User?
+
+        if (activity == null || user == null) {
+            finish() // Finish if activity or user details are not properly passed
+            return
+        }
+
+        val db = AppDatabase.getInstance(this)
+        val activityNameTextView: TextView = findViewById(R.id.activityNameTextView)
+        val scheduleTextView: TextView = findViewById(R.id.scheduleTextView)
+        val numberOfRemindersTextView: TextView = findViewById(R.id.numberOfRemindersTextView)
+        val remindersListView: ListView = findViewById(R.id.remindersListView)
+        val reminderMessageEditText: EditText = findViewById(R.id.reminderMessageEditText)
+        val updateButton: Button = findViewById(R.id.updateScheduleButton)
+        val deleteButton: Button = findViewById(R.id.deleteScheduleButton)
+        val returnButton: Button = findViewById(R.id.returnButton)
+
+        var currentScheduleId: Int? = null
+
+        lifecycleScope.launch {
+            val schedule = db.appDao().getLatestReminderScheduleForUser(user.userId, activity.activityId)
+            if (schedule != null) {
+                currentScheduleId = schedule.reminderScheduleId
+                val reminders = db.appDao().getRemindersBySchedule(schedule.reminderScheduleId)
+
+                runOnUiThread {
+                    activityNameTextView.text = "Reminders for ${activity.activityName}"
+                    scheduleTextView.text = "The chosen schedule is: ${schedule.reminderType}"
+                    if (schedule.reminderType == "Custom") {
+                        numberOfRemindersTextView.visibility = View.VISIBLE
+                        numberOfRemindersTextView.text = "Number of reminders: ${schedule.numberOfReminders}"
+                    } else {
+                        numberOfRemindersTextView.visibility = View.GONE
+                    }
+                    val adapter = ReminderAdapter(this@ManageRemindersActivity, reminders)
+                    remindersListView.adapter = adapter
+                    reminderMessageEditText.setText(reminders.firstOrNull()?.reminderMessage ?: "No message set")
+                }
+            }
+        }
+
     }
 }
