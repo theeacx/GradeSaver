@@ -1,11 +1,14 @@
 package com.example.gradesaver
 
+import android.app.AlertDialog
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ListView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.gradesaver.adapters.ReminderAdapter
@@ -66,8 +69,41 @@ class ManageRemindersActivity : AppCompatActivity() {
         }
 
         deleteButton.setOnClickListener {
-            // Handle schedule deletion
+            AlertDialog.Builder(this)
+                .setTitle("Confirm Deletion")
+                .setMessage("Are you sure you want to delete this reminder schedule? This action cannot be undone.")
+                .setPositiveButton("Delete") { dialog, which ->
+                    lifecycleScope.launch {
+                        currentScheduleId?.let { scheduleId ->
+                            // Retrieve the full ReminderSchedule object
+                            val scheduleToDelete = db.appDao().getReminderScheduleById(scheduleId)
+                            scheduleToDelete?.let { schedule ->
+                                // Delete all reminders associated with the schedule
+                                val reminders = db.appDao().getRemindersBySchedule(schedule.reminderScheduleId)
+                                reminders.forEach { reminder ->
+                                    db.appDao().deleteReminder(reminder)
+                                }
+                                // Now delete the reminder schedule
+                                db.appDao().deleteReminderSchedule(schedule)
+                            }
+                            // Navigate back to StudentsCoursesActivity
+                            runOnUiThread {
+                                Toast.makeText(this@ManageRemindersActivity, "Schedule and reminders deleted", Toast.LENGTH_SHORT).show()
+                                val intent = Intent(this@ManageRemindersActivity, StudentsCourseActivity::class.java)
+                                intent.putExtra("USER_DETAILS", user)
+                                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+                                startActivity(intent)
+                                finish()
+                            }
+                        } ?: runOnUiThread {
+                            Toast.makeText(this@ManageRemindersActivity, "No schedule found to delete", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
         }
+
 
         returnButton.setOnClickListener {
             lifecycleScope.launch {
@@ -84,4 +120,3 @@ class ManageRemindersActivity : AppCompatActivity() {
         }
     }
 }
-

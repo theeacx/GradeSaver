@@ -154,4 +154,8 @@ interface AppDao {
 
     @Update
     suspend fun updateReminder(reminder: Reminder)
+
+    @Query("SELECT * FROM reminderSchedules WHERE reminderScheduleId = :reminderScheduleId LIMIT 1")
+    suspend fun getReminderScheduleById(reminderScheduleId: Int): ReminderSchedule?
+
 }
