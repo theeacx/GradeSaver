@@ -46,7 +46,7 @@ class ManageRemindersActivity : AppCompatActivity() {
             val schedule = db.appDao().getLatestReminderScheduleForUser(user.userId, activity.activityId)
             if (schedule != null) {
                 currentScheduleId = schedule.reminderScheduleId
-                val reminders = db.appDao().getRemindersBySchedule(schedule.reminderScheduleId)
+                val reminders = db.appDao().getRemindersBySchedule(schedule.reminderScheduleId).toMutableList()
 
                 runOnUiThread {
                     activityNameTextView.text = "Reminders for ${activity.activityName}"
@@ -160,7 +160,9 @@ class ManageRemindersActivity : AppCompatActivity() {
                     } else {
                         numberOfRemindersTextView.visibility = View.GONE
                     }
-                    val adapter = ReminderAdapter(this@ManageRemindersActivity, reminders)
+                    val adapter = ReminderAdapter(this@ManageRemindersActivity,
+                        reminders.toMutableList()
+                    )
                     remindersListView.adapter = adapter
                     reminderMessageEditText.setText(reminders.firstOrNull()?.reminderMessage ?: "No message set")
                 }
