@@ -14,7 +14,6 @@ import androidx.lifecycle.lifecycleScope
 import com.example.gradesaver.database.AppDatabase
 import com.example.gradesaver.database.entities.User
 import com.example.gradesaver.security.Hash.Companion.toSHA256
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.launch
 
 class PersonalProfileActivity : AppCompatActivity() {
@@ -34,7 +33,7 @@ class PersonalProfileActivity : AppCompatActivity() {
         }
 
         // Inside your PersonalProfileActivity
-        val fabDeleteProfile: FloatingActionButton = findViewById(R.id.fab_delete_profile)
+        val fabDeleteProfile: Button = findViewById(R.id.deleteAccountButton)
         fabDeleteProfile.setOnClickListener {
             AlertDialog.Builder(this).apply {
                 setTitle("Delete Account")

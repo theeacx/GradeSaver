@@ -194,4 +194,12 @@ class StudentCoursesExpandableListAdapter(
             }
         }
     }
+    fun updateActivitiesForCourse(courseId: Int, newActivities: List<Activity>) {
+        // Assuming `details` is a Map<Course, List<Activity>> where Course has an ID field.
+        details.keys.firstOrNull { it.courseId == courseId }?.let { course ->
+            details[course] = newActivities
+            notifyDataSetChanged() // Notifies the UI to refresh based on the new data
+        }
+    }
+
 }

@@ -1,4 +1,5 @@
 package com.example.gradesaver.database.dao
+import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.example.gradesaver.database.entities.Activity
 import com.example.gradesaver.database.entities.Course
@@ -157,5 +158,21 @@ interface AppDao {
 
     @Query("SELECT * FROM reminderSchedules WHERE reminderScheduleId = :reminderScheduleId LIMIT 1")
     suspend fun getReminderScheduleById(reminderScheduleId: Int): ReminderSchedule?
+
+    @Query("SELECT * FROM activities WHERE courseId = :courseId")
+    fun fetchActivitiesByCourseAsLiveData(courseId: Int): LiveData<List<Activity>>
+
+
+//    @Transaction
+//    suspend fun insertActivityAndScheduleNotification(activity: Activity, context: Context) {
+//        // Step 1: Insert the activity into the database
+//        insertActivity(activity);
+//
+//        // Step 2: Schedule a notification
+//        scheduleNotification(activity, context);
+//    }
+
+    @Query("SELECT * FROM activities WHERE activityId = :activityId")
+    fun getActivityById(activityId: Int): Activity?
 
 }
