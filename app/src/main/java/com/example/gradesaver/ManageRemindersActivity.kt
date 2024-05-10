@@ -1,6 +1,8 @@
 package com.example.gradesaver
 
 import android.app.AlertDialog
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -14,10 +16,16 @@ import androidx.lifecycle.lifecycleScope
 import com.example.gradesaver.adapters.ReminderAdapter
 import com.example.gradesaver.database.AppDatabase
 import com.example.gradesaver.database.entities.Activity
+import com.example.gradesaver.database.entities.Reminder
 import com.example.gradesaver.database.entities.User
 import kotlinx.coroutines.launch
+import java.util.Calendar
+import java.util.Date
 
 class ManageRemindersActivity : AppCompatActivity() {
+    private lateinit var db: AppDatabase  // Ensure db is accessible throughout the class
+    private var currentScheduleId: Int? = null  // Declare at class level
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_manage_reminders)
@@ -30,7 +38,7 @@ class ManageRemindersActivity : AppCompatActivity() {
             return
         }
 
-        val db = AppDatabase.getInstance(this)
+        db = AppDatabase.getInstance(this)
         val activityNameTextView: TextView = findViewById(R.id.activityNameTextView)
         val scheduleTextView: TextView = findViewById(R.id.scheduleTextView)
         val numberOfRemindersTextView: TextView = findViewById(R.id.numberOfRemindersTextView)
@@ -40,7 +48,7 @@ class ManageRemindersActivity : AppCompatActivity() {
         val deleteButton: Button = findViewById(R.id.deleteScheduleButton)
         val returnButton: Button = findViewById(R.id.returnButton)
 
-        var currentScheduleId: Int? = null
+//        var currentScheduleId: Int? = null
 
         lifecycleScope.launch {
             val schedule = db.appDao().getLatestReminderScheduleForUser(user.userId, activity.activityId)
@@ -122,9 +130,66 @@ class ManageRemindersActivity : AppCompatActivity() {
                 finish()  // Close the activity and return to previous screen
             }
         }
+
+        val addExtraReminderButton :Button = findViewById(R.id.addExtraReminderButton)
+        addExtraReminderButton.setOnClickListener {
+            val reminderMessage = reminderMessageEditText.text.toString().trim()
+            if (reminderMessage.isNotEmpty()) {
+                showDatePicker(reminderMessage)
+            } else {
+                Toast.makeText(this, "Please enter a reminder message.", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
+
+    private fun showDatePicker(reminderMessage: String) {
+        val calendar = Calendar.getInstance()
+        DatePickerDialog(this, { _, year, month, dayOfMonth ->
+            calendar.set(year, month, dayOfMonth)
+            showTimePicker(calendar, reminderMessage)
+        }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show()
+    }
+
+    private fun showTimePicker(calendar: Calendar, reminderMessage: String) {
+        TimePickerDialog(this, { _, hourOfDay, minute ->
+            calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
+            calendar.set(Calendar.MINUTE, minute)
+            val reminderDateTime = calendar.time
+            addReminder(reminderMessage, reminderDateTime)
+        }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true).show()
+    }
+
+    private fun addReminder(reminderMessage: String, reminderDateTime: Date) {
+        currentScheduleId?.let { scheduleId ->
+            lifecycleScope.launch {
+                val newReminder = Reminder(reminderScheduleId = scheduleId, reminderMessage = reminderMessage, reminderDate = reminderDateTime)  // Ensure parameter names match those expected by Reminder constructor
+                db.appDao().insertReminder(newReminder)
+                refreshRemindersList()
+                runOnUiThread {
+                    Toast.makeText(this@ManageRemindersActivity, "Reminder added successfully", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } ?: runOnUiThread {
+            Toast.makeText(this, "Schedule ID is unavailable.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun refreshRemindersList() {
+        currentScheduleId?.let { scheduleId ->
+            lifecycleScope.launch {
+                val reminders = db.appDao().getRemindersBySchedule(scheduleId).toMutableList()
+                runOnUiThread {
+                    val adapter = ReminderAdapter(this@ManageRemindersActivity, reminders)
+                    findViewById<ListView>(R.id.remindersListView).adapter = adapter
+                }
+            }
+        }
+    }
+
     override fun onResume() {
         super.onResume()
+        refreshRemindersList()
+
         val activity = intent.getSerializableExtra("ACTIVITY") as Activity?
         val user = intent.getSerializableExtra("USER_DETAILS") as User?
 
@@ -139,19 +204,16 @@ class ManageRemindersActivity : AppCompatActivity() {
         val numberOfRemindersTextView: TextView = findViewById(R.id.numberOfRemindersTextView)
         val remindersListView: ListView = findViewById(R.id.remindersListView)
         val reminderMessageEditText: EditText = findViewById(R.id.reminderMessageEditText)
-        val updateButton: Button = findViewById(R.id.updateScheduleButton)
-        val deleteButton: Button = findViewById(R.id.deleteScheduleButton)
-        val returnButton: Button = findViewById(R.id.returnButton)
-
-        var currentScheduleId: Int? = null
 
         lifecycleScope.launch {
             val schedule = db.appDao().getLatestReminderScheduleForUser(user.userId, activity.activityId)
-            if (schedule != null) {
-                currentScheduleId = schedule.reminderScheduleId
-                val reminders = db.appDao().getRemindersBySchedule(schedule.reminderScheduleId)
+            currentScheduleId = schedule?.reminderScheduleId
+            val reminders = schedule?.let {
+                db.appDao().getRemindersBySchedule(it.reminderScheduleId)
+            } ?: emptyList()
 
-                runOnUiThread {
+            runOnUiThread {
+                if (schedule != null) {
                     activityNameTextView.text = "Reminders for ${activity.activityName}"
                     scheduleTextView.text = "The chosen schedule is: ${schedule.reminderType}"
                     if (schedule.reminderType == "Custom") {
@@ -160,14 +222,12 @@ class ManageRemindersActivity : AppCompatActivity() {
                     } else {
                         numberOfRemindersTextView.visibility = View.GONE
                     }
-                    val adapter = ReminderAdapter(this@ManageRemindersActivity,
-                        reminders.toMutableList()
-                    )
-                    remindersListView.adapter = adapter
-                    reminderMessageEditText.setText(reminders.firstOrNull()?.reminderMessage ?: "No message set")
                 }
+                val adapter = ReminderAdapter(this@ManageRemindersActivity, reminders.toMutableList())
+                remindersListView.adapter = adapter
+                reminderMessageEditText.setText(reminders.firstOrNull()?.reminderMessage ?: "No message set")
             }
         }
-
     }
+
 }

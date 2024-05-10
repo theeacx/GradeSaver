@@ -89,6 +89,15 @@
                 android:layout_height="150dp"
                 android:layout_marginTop="10dp" />
 
+            <Button
+                android:id="@+id/addExtraReminderButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Add Extra Reminder"
+                android:backgroundTint="@color/purple"
+                android:textColor="@android:color/white"
+                android:layout_marginTop="10dp" />
+
             <EditText
                 android:id="@+id/reminderMessageEditText"
                 android:layout_width="match_parent"
