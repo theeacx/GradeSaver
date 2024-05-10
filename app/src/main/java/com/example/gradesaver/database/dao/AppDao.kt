@@ -1,6 +1,12 @@
 package com.example.gradesaver.database.dao
 import androidx.lifecycle.LiveData
 import androidx.room.*
+import com.example.gradesaver.dataClasses.ActivityCount
+import com.example.gradesaver.dataClasses.EnrollmentCountByCourse
+import com.example.gradesaver.dataClasses.MonthlyDeadlineCount
+import com.example.gradesaver.dataClasses.PendingActivityCountByStudent
+import com.example.gradesaver.dataClasses.ReminderCountByActivity
+import com.example.gradesaver.dataClasses.ScheduleCountByActivityAndUser
 import com.example.gradesaver.database.entities.Activity
 import com.example.gradesaver.database.entities.Course
 import com.example.gradesaver.database.entities.Enrollment
@@ -163,82 +169,78 @@ interface AppDao {
     fun fetchActivitiesByCourseAsLiveData(courseId: Int): LiveData<List<Activity>>
 
 
-//    @Transaction
-//    suspend fun insertActivityAndScheduleNotification(activity: Activity, context: Context) {
-//        // Step 1: Insert the activity into the database
-//        insertActivity(activity);
-//
-//        // Step 2: Schedule a notification
-//        scheduleNotification(activity, context);
-//    }
+
 
     @Query("SELECT * FROM activities WHERE activityId = :activityId")
     fun getActivityById(activityId: Int): Activity?
-//
-//    @Query("""
-//    SELECT activityName, activityType, dueDate
-//    FROM activities
-//    WHERE courseId IN (SELECT courseId FROM courses WHERE professorId = :professorId)
-//    AND strftime('%m', dueDate) = :month
-//    ORDER BY dueDate
-//""")
-//    suspend fun getActivitiesByMonth(professorId: Int, month: String): List<Activity>
-//
-//    @Query("""
-//    SELECT activityType, COUNT(*) as activityCount
-//    FROM activities
-//    WHERE courseId IN (SELECT courseId FROM courses WHERE professorId = :professorId)
-//    GROUP BY activityType
-//""")
-//    suspend fun getActivityCountsByType(professorId: Int): List<Int>
-//
-//    @Query("""
-//    SELECT a.activityName, COUNT(*) as reminderCount
-//    FROM reminders r
-//    JOIN reminderSchedules rs ON r.reminderScheduleId = rs.reminderScheduleId
-//    JOIN activities a ON rs.activityId = a.activityId
-//    WHERE a.courseId IN (SELECT courseId FROM courses WHERE professorId = :professorId)
-//    GROUP BY a.activityId
-//""")
-//    suspend fun getReminderCountsByActivity(professorId: Int): List<Int>
-//
-//    @Query("""
-//    SELECT a.activityName, u.email, COUNT(*) as scheduleCount
-//    FROM reminderSchedules rs
-//    JOIN activities a ON rs.activityId = a.activityId
-//    JOIN users u ON rs.studentId = u.userId
-//    WHERE a.courseId IN (SELECT courseId FROM courses WHERE professorId = :professorId)
-//    GROUP BY rs.activityId, rs.studentId
-//""")
-//    suspend fun getScheduleCountsByActivityAndUser(professorId: Int): List<Int>
-//
-//    @Query("""
-//    SELECT c.courseName, COUNT(*) as enrolledCount
-//    FROM enrollments e
-//    JOIN courses c ON e.courseId = c.courseId
-//    WHERE c.professorId = :professorId
-//    GROUP BY c.courseId
-//""")
-//    suspend fun getEnrollmentCountsByCourse(professorId: Int): List<Int>
-//
-//    @Query("""
-//    SELECT a.activityName, u.email, COUNT(ua.userActivityId) as pendingActivities
-//    FROM userActivities ua
-//    JOIN activities a ON ua.activityId = a.activityId
-//    JOIN users u ON ua.studentId = u.userId
-//    WHERE a.dueDate > CURRENT_DATE AND ua.isCompleted = 0
-//    AND a.courseId IN (SELECT courseId FROM courses WHERE professorId = :professorId)
-//    GROUP BY a.activityId, ua.studentId
-//""")
-//    suspend fun getPendingActivitiesByStudent(professorId: Int): List<Int>
-//
-//    @Query("""
-//    SELECT strftime('%m', dueDate) as month, COUNT(*) as totalDeadlines
-//    FROM activities
-//    WHERE courseId IN (SELECT courseId FROM courses)
-//    GROUP BY strftime('%m', dueDate)
-//""")
-//    suspend fun getTotalDeadlinesByMonth(): Map<String, Int>
+
+    @Query("""
+    SELECT *
+    FROM activities
+    WHERE courseId IN (SELECT courseId FROM courses WHERE professorId = :professorId)
+    AND strftime('%m', dueDate) = :month
+    ORDER BY dueDate
+""")
+    suspend fun getActivitiesByMonth(professorId: Int, month: String): List<Activity>
+
+
+    @Query("""
+    SELECT activityType, COUNT(*) as activityCount
+    FROM activities
+    WHERE courseId IN (SELECT courseId FROM courses WHERE professorId = :professorId)
+    GROUP BY activityType
+""")
+    suspend fun getActivityCountsByType(professorId: Int): List<ActivityCount>
+    @Query("""
+    SELECT a.activityName, COUNT(*) as reminderCount
+    FROM reminders r
+    JOIN reminderSchedules rs ON r.reminderScheduleId = rs.reminderScheduleId
+    JOIN activities a ON rs.activityId = a.activityId
+    WHERE a.courseId IN (SELECT courseId FROM courses WHERE professorId = :professorId)
+    GROUP BY a.activityId
+""")
+    suspend fun getReminderCountsByActivity(professorId: Int): List<ReminderCountByActivity>
+
+    @Query("""
+    SELECT a.activityName, u.email, COUNT(*) as scheduleCount
+    FROM reminderSchedules rs
+    JOIN activities a ON rs.activityId = a.activityId
+    JOIN users u ON rs.studentId = u.userId
+    WHERE a.courseId IN (SELECT courseId FROM courses WHERE professorId = :professorId)
+    GROUP BY rs.activityId, rs.studentId
+""")
+    suspend fun getScheduleCountsByActivityAndUser(professorId: Int): List<ScheduleCountByActivityAndUser>
+
+
+    @Query("""
+    SELECT c.courseName, COUNT(*) as enrolledCount
+    FROM enrollments e
+    JOIN courses c ON e.courseId = c.courseId
+    WHERE c.professorId = :professorId
+    GROUP BY c.courseId
+""")
+    suspend fun getEnrollmentCountsByCourse(professorId: Int): List<EnrollmentCountByCourse>
+
+
+    @Query("""
+    SELECT a.activityName, u.email, COUNT(ua.userActivityId) as pendingActivities
+    FROM userActivities ua
+    JOIN activities a ON ua.activityId = a.activityId
+    JOIN users u ON ua.studentId = u.userId
+    WHERE a.dueDate > CURRENT_DATE AND ua.isCompleted = 0
+    AND a.courseId IN (SELECT courseId FROM courses WHERE professorId = :professorId)
+    GROUP BY a.activityId, ua.studentId
+""")
+    suspend fun getPendingActivitiesByStudent(professorId: Int): List<PendingActivityCountByStudent>
+
+
+    @Query("""
+        SELECT strftime('%m', dueDate) as month, COUNT(*) as totalDeadlines
+        FROM activities
+        WHERE courseId IN (SELECT courseId FROM courses)
+        GROUP BY strftime('%m', dueDate)
+    """)
+    suspend fun getTotalDeadlinesByMonth(): List<MonthlyDeadlineCount>
 
 
 }
