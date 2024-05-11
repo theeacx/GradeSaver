@@ -5,12 +5,14 @@ import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.example.gradesaver.dataClasses.ActivityCount
 import com.example.gradesaver.dataClasses.EnrollmentCountByCourse
 import com.example.gradesaver.dataClasses.MonthlyActivityCount
 import com.example.gradesaver.database.AppDatabase
 import com.example.gradesaver.database.entities.User
 import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
@@ -18,7 +20,11 @@ import com.github.mikephil.charting.data.BarEntry
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
+import com.github.mikephil.charting.data.PieData
+import com.github.mikephil.charting.data.PieDataSet
+import com.github.mikephil.charting.data.PieEntry
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
+import com.github.mikephil.charting.formatter.PercentFormatter
 import kotlinx.coroutines.launch
 
 class DashboardActivity : AppCompatActivity() {
@@ -32,12 +38,14 @@ class DashboardActivity : AppCompatActivity() {
         // Initialize the BarChart
         val barChart: BarChart = findViewById(R.id.barChart)
         val lineChart: LineChart = findViewById(R.id.lineChart)
+        val pieChart: PieChart = findViewById(R.id.pieChart)
 
         // Load enrollment data if userId is valid
         if (userId != -1) {
             if (userId != null) {
                 loadEnrollmentData(barChart, userId)
                 loadMonthlyActivityData(lineChart, userId)
+                loadActivityTypeData(pieChart, userId)
             }
         } else {
             // Handle error case where userId isn't passed correctly
@@ -153,6 +161,47 @@ class DashboardActivity : AppCompatActivity() {
         lineChart.invalidate() // Refresh the chart
     }
 
+    private fun loadActivityTypeData(pieChart: PieChart, professorId: Int) {
+        lifecycleScope.launch {
+            val database = AppDatabase.getInstance(applicationContext)
+            val activityCounts = database.appDao().getActivityCountsByType(professorId)
+            updatePieChart(pieChart, activityCounts)
+        }
+    }
 
+    private fun updatePieChart(pieChart: PieChart, data: List<ActivityCount>) {
+        val entries = ArrayList<PieEntry>()
+
+        // Create entries for the pie chart
+        data.forEach {
+            entries.add(PieEntry(it.activityCount.toFloat(), it.activityType))
+        }
+
+        val dataSet = PieDataSet(entries, "Activity Types")
+        // Define a custom set of colors
+        val colors = arrayListOf(
+            Color.parseColor("#FF6347"), // Tomato for Test
+            Color.parseColor("#FFD700"), // Gold for Exam
+            Color.parseColor("#4682B4"), // Steel Blue for Midterm Exam
+            Color.parseColor("#32CD32"), // Lime Green for Project
+            Color.parseColor("#FFA500"), // Orange for Presentation
+            Color.parseColor("#6A5ACD")  // Slate Blue for the additional type
+        )
+        dataSet.colors = colors
+
+        val pieData = PieData(dataSet)
+        pieData.setValueFormatter(PercentFormatter(pieChart)) // Format as percentage
+        pieData.setValueTextSize(12f) // Set the text size for values
+        pieData.setValueTextColor(Color.WHITE) // Set the text color for values
+
+        pieChart.data = pieData
+        pieChart.description.isEnabled = false  // Disable the description label
+        pieChart.isDrawHoleEnabled = false  // Create a donut-style chart
+        pieChart.setUsePercentValues(true) // Enable percentage display
+        pieChart.setEntryLabelColor(Color.BLACK) // Set entry labels color
+        pieChart.setEntryLabelTextSize(12f) // Entry label text size
+        pieChart.animateY(1400)  // Animate the chart
+        pieChart.invalidate()  // Refresh the chart
+    }
 
 }

@@ -4,7 +4,6 @@ import androidx.room.*
 import com.example.gradesaver.dataClasses.ActivityCount
 import com.example.gradesaver.dataClasses.EnrollmentCountByCourse
 import com.example.gradesaver.dataClasses.MonthlyActivityCount
-import com.example.gradesaver.dataClasses.MonthlyDeadlineCount
 import com.example.gradesaver.dataClasses.PendingActivityCountByStudent
 import com.example.gradesaver.dataClasses.ReminderCountByActivity
 import com.example.gradesaver.dataClasses.ScheduleCountByActivityAndUser
@@ -237,13 +236,13 @@ interface AppDao {
     suspend fun getPendingActivitiesByStudent(professorId: Int): List<PendingActivityCountByStudent>
 
 
-    @Query("""
-        SELECT strftime('%m', dueDate) as month, COUNT(*) as totalDeadlines
-        FROM activities
-        WHERE courseId IN (SELECT courseId FROM courses)
-        GROUP BY strftime('%m', dueDate)
-    """)
-    suspend fun getTotalDeadlinesByMonth(): List<MonthlyDeadlineCount>
+//    @Query("""
+//        SELECT strftime('%m', dueDate) as month, COUNT(*) as totalDeadlines
+//        FROM activities
+//        WHERE courseId IN (SELECT courseId FROM courses)
+//        GROUP BY strftime('%m', dueDate)
+//    """)
+//    suspend fun getTotalDeadlinesByMonth(): List<MonthlyDeadlineCount>
 
 
 }
