@@ -27,8 +27,8 @@
             android:name=".StudentsCourseActivity"
             android:exported="false" />
         <activity
-            android:name=".DashbordActivity"
-            android:exported="false" />
+            android:name=".DashboardActivity"
+            android:exported="true" />
         <activity
             android:name=".AddActivityActivity"
             android:exported="false" />

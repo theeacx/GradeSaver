@@ -30,7 +30,7 @@ class ProfessorMainScreenActivity : AppCompatActivity() {
 
         val fabFour: FloatingActionButton = findViewById(R.id.fabFour)
         fabFour.setOnClickListener {
-            val intent = Intent(this, DashbordActivity::class.java).apply {
+            val intent = Intent(this, DashboardActivity::class.java).apply {
                 putExtra("USER_DETAILS", user)
             }
             startActivity(intent)
