@@ -63,7 +63,7 @@ class DashboardActivity : AppCompatActivity() {
             Log.d("ChartLabel", "Course Name: $label")
         }
 
-        val dataSet = BarDataSet(entries, "Enrollment Counts")
+        val dataSet = BarDataSet(entries, "No of enrollments")
         dataSet.color = resources.getColor(R.color.purple, null)
 
         val barData = BarData(dataSet)
@@ -91,7 +91,7 @@ class DashboardActivity : AppCompatActivity() {
             textColor = Color.BLACK  // Ensure text color is visible
         }
 
-        barChart.description.text = "Enrollment Counts by Course"
+//        barChart.description.text = "Enrollment Counts by Course"
         barChart.animateY(1000)
         barChart.extraBottomOffset = 20f  // Ensure there is space for rotated labels
         barChart.setVisibleXRangeMaximum(5f)  // You can limit visible count to enhance readability
