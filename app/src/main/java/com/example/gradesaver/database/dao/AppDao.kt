@@ -3,6 +3,7 @@ import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.example.gradesaver.dataClasses.ActivityCount
 import com.example.gradesaver.dataClasses.EnrollmentCountByCourse
+import com.example.gradesaver.dataClasses.MonthlyActivityCount
 import com.example.gradesaver.dataClasses.MonthlyDeadlineCount
 import com.example.gradesaver.dataClasses.PendingActivityCountByStudent
 import com.example.gradesaver.dataClasses.ReminderCountByActivity
@@ -175,13 +176,15 @@ interface AppDao {
     fun getActivityById(activityId: Int): Activity?
 
     @Query("""
-    SELECT *
+    SELECT strftime('%m', datetime(dueDate / 1000, 'unixepoch')) AS month, COUNT(*) AS count
     FROM activities
     WHERE courseId IN (SELECT courseId FROM courses WHERE professorId = :professorId)
-    AND strftime('%m', dueDate) = :month
-    ORDER BY dueDate
+    GROUP BY strftime('%m', datetime(dueDate / 1000, 'unixepoch'))
+    ORDER BY strftime('%m', datetime(dueDate / 1000, 'unixepoch'))
 """)
-    suspend fun getActivitiesByMonth(professorId: Int, month: String): List<Activity>
+    suspend fun getActivityCountsByMonth(professorId: Int): List<MonthlyActivityCount>
+
+
 
 
     @Query("""

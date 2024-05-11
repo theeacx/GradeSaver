@@ -6,13 +6,18 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.gradesaver.dataClasses.EnrollmentCountByCourse
+import com.example.gradesaver.dataClasses.MonthlyActivityCount
 import com.example.gradesaver.database.AppDatabase
 import com.example.gradesaver.database.entities.User
 import com.github.mikephil.charting.charts.BarChart
+import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import kotlinx.coroutines.launch
 
@@ -26,11 +31,13 @@ class DashboardActivity : AppCompatActivity() {
         val userId = (intent.getSerializableExtra("USER_DETAILS") as? User)?.userId
         // Initialize the BarChart
         val barChart: BarChart = findViewById(R.id.barChart)
+        val lineChart: LineChart = findViewById(R.id.lineChart)
 
         // Load enrollment data if userId is valid
         if (userId != -1) {
             if (userId != null) {
                 loadEnrollmentData(barChart, userId)
+                loadMonthlyActivityData(lineChart, userId)
             }
         } else {
             // Handle error case where userId isn't passed correctly
@@ -97,5 +104,55 @@ class DashboardActivity : AppCompatActivity() {
         barChart.setVisibleXRangeMaximum(5f)  // You can limit visible count to enhance readability
         barChart.invalidate()  // Refresh the chart
     }
+
+    private fun loadMonthlyActivityData(lineChart: LineChart, professorId: Int) {
+        lifecycleScope.launch {
+            val database = AppDatabase.getInstance(applicationContext)
+            val monthlyActivityCounts = database.appDao().getActivityCountsByMonth(professorId)
+
+            // Log each monthly activity count to debug the data
+            monthlyActivityCounts.forEach { activityCount ->
+                Log.d("MonthlyActivityData", "Month: ${activityCount.month}, Count: ${activityCount.count}")
+            }
+
+            if (monthlyActivityCounts.isEmpty()) {
+                Log.d("MonthlyActivityData", "No data available for this month.")
+            } else {
+                updateLineChartWithMonthlyData(lineChart, monthlyActivityCounts)
+            }
+        }
+    }
+
+
+    private fun updateLineChartWithMonthlyData(lineChart: LineChart, data: List<MonthlyActivityCount>) {
+        val entries = ArrayList<Entry>()
+        val labels = ArrayList<String>()
+
+        data.forEachIndexed { index, monthlyActivityCount ->
+            entries.add(Entry(index.toFloat(), monthlyActivityCount.count.toFloat()))
+            monthlyActivityCount.month?.let { labels.add(it) }  // Assuming 'month' is a string like "01", "02", etc.
+        }
+
+        val dataSet = LineDataSet(entries, "Activity Count per Month")
+        dataSet.color = resources.getColor(R.color.purple, null)
+        val lineData = LineData(dataSet)
+        lineChart.data = lineData
+
+        lineChart.xAxis.apply {
+            valueFormatter = IndexAxisValueFormatter(labels)
+            position = XAxis.XAxisPosition.BOTTOM
+            setDrawLabels(true)
+            labelRotationAngle = 45f
+            granularity = 1f
+            isGranularityEnabled = true
+            setLabelCount(labels.size)
+        }
+
+//        lineChart.description.text = "Monthly Activity Counts"
+        lineChart.animateX(1000)
+        lineChart.invalidate() // Refresh the chart
+    }
+
+
 
 }
