@@ -16,6 +16,7 @@ import com.example.gradesaver.database.AppDatabase
 import com.example.gradesaver.database.entities.Course
 import com.example.gradesaver.database.entities.User
 import com.github.mikephil.charting.charts.BarChart
+import com.github.mikephil.charting.charts.HorizontalBarChart
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.charts.ScatterChart
@@ -55,6 +56,7 @@ class DashboardActivity : AppCompatActivity() {
                 loadMonthlyActivityData(lineChart, userId)
                 loadActivityTypeData(pieChart, userId)
                 loadCoursesAndSetupSpinner(userId)
+                loadCoursesAndSetupSpinners2(userId)
             }
         } else {
             // Handle error case where userId isn't passed correctly
@@ -282,5 +284,85 @@ class DashboardActivity : AppCompatActivity() {
 
         scatterChart.invalidate() // Refresh the chart
     }
+
+    private fun loadCoursesAndSetupSpinners2(professorId: Int) {
+        lifecycleScope.launch {
+            val database = AppDatabase.getInstance(applicationContext)
+            val courses = database.appDao().getCoursesByProfessor(professorId)
+            setupSpinner2(findViewById(R.id.courseSpinner), courses)
+        }
+    }
+
+    private fun setupSpinner2(spinner: Spinner, courses: List<Course>) {
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, courses.map { it.courseName })
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinner.adapter = adapter
+
+        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: View, position: Int, id: Long) {
+                val selectedCourseId = courses[position].courseId
+                if (spinner.id == R.id.courseSpinner) {
+                    loadReminderDistributionData(selectedCourseId)
+                }
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>) {
+                // Optional handling for no selection
+            }
+        }
+    }
+
+    private fun loadReminderDistributionData(courseId: Int) {
+        lifecycleScope.launch {
+            val database = AppDatabase.getInstance(applicationContext)
+            val reminderCounts = database.appDao().getRemindersCountByActivity(courseId);
+
+            val entries = ArrayList<BarEntry>()
+            val labels = ArrayList<String>()
+            reminderCounts.forEachIndexed { index, reminderCount ->
+                entries.add(BarEntry(index.toFloat(), reminderCount.reminderCount.toFloat()))
+                labels.add(reminderCount.activityName)
+            }
+
+            val dataSet = BarDataSet(entries, "Reminder Counts").apply {
+                color = resources.getColor(R.color.purple, null) // Use the theme's purple color
+                valueTextColor = Color.WHITE
+                valueTextSize = 10f
+            }
+
+            val data = BarData(dataSet).apply {
+                barWidth = 0.4f // Set bar width
+            }
+
+            val barChart: HorizontalBarChart = findViewById(R.id.horizontalBarChart)
+            barChart.data = data
+            barChart.setFitBars(true) // Make the x-axis fit exactly all bars
+
+            barChart.xAxis.apply {
+                valueFormatter = IndexAxisValueFormatter(labels)
+                position = XAxis.XAxisPosition.BOTTOM_INSIDE
+                setDrawGridLines(false)
+                setDrawAxisLine(false)
+                granularity = 1f
+                labelCount = labels.size
+                textSize = 10f // Adjust text size for better fit
+                labelRotationAngle = -45f // Rotate labels to avoid overlap
+            }
+
+            barChart.axisLeft.apply {
+                axisMinimum = 0f // Start at zero
+                granularity = 1f // Interval of 1
+            }
+
+            barChart.axisRight.isEnabled = true // Enable right axis to balance the view
+
+            barChart.description.isEnabled = false // Disable the description
+            barChart.legend.isEnabled = false // Disable the legend if not needed
+
+            barChart.animateY(1000)
+            barChart.invalidate() // Refresh the chart
+        }
+    }
+
 
 }

@@ -3,6 +3,7 @@ import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.example.gradesaver.dataClasses.ActivityCount
 import com.example.gradesaver.dataClasses.ActivityExclusionInfo
+import com.example.gradesaver.dataClasses.ActivityReminderCount
 import com.example.gradesaver.dataClasses.EnrollmentCountByCourse
 import com.example.gradesaver.dataClasses.MonthlyActivityCount
 import com.example.gradesaver.dataClasses.PendingActivityCountByStudent
@@ -267,5 +268,16 @@ interface AppDao {
     WHERE a.courseId != :courseId
 """)
     suspend fun getAllActivitiesExceptSelectedCourse(courseId: Int): List<ActivityExclusionInfo>
+
+    @Query("""
+    SELECT a.activityName, COUNT(r.reminderId) as reminderCount
+    FROM activities a
+    LEFT JOIN reminderSchedules rs ON a.activityId = rs.activityId
+    LEFT JOIN reminders r ON rs.reminderScheduleId = r.reminderScheduleId
+    WHERE a.courseId = :courseId
+    GROUP BY a.activityId
+""")
+    suspend fun getRemindersCountByActivity(courseId: Int): List<ActivityReminderCount>
+
 
 }
