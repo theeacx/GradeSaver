@@ -3,16 +3,22 @@ package com.example.gradesaver
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
+import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Spinner
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.gradesaver.dataClasses.ActivityCount
 import com.example.gradesaver.dataClasses.EnrollmentCountByCourse
 import com.example.gradesaver.dataClasses.MonthlyActivityCount
 import com.example.gradesaver.database.AppDatabase
+import com.example.gradesaver.database.entities.Course
 import com.example.gradesaver.database.entities.User
 import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.charts.PieChart
+import com.github.mikephil.charting.charts.ScatterChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
@@ -23,6 +29,8 @@ import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
+import com.github.mikephil.charting.data.ScatterData
+import com.github.mikephil.charting.data.ScatterDataSet
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.github.mikephil.charting.formatter.PercentFormatter
 import kotlinx.coroutines.launch
@@ -46,6 +54,7 @@ class DashboardActivity : AppCompatActivity() {
                 loadEnrollmentData(barChart, userId)
                 loadMonthlyActivityData(lineChart, userId)
                 loadActivityTypeData(pieChart, userId)
+                loadCoursesAndSetupSpinner(userId)
             }
         } else {
             // Handle error case where userId isn't passed correctly
@@ -202,6 +211,76 @@ class DashboardActivity : AppCompatActivity() {
         pieChart.setEntryLabelTextSize(12f) // Entry label text size
         pieChart.animateY(1400)  // Animate the chart
         pieChart.invalidate()  // Refresh the chart
+    }
+
+    private fun loadCoursesAndSetupSpinner(professorId: Int) {
+        lifecycleScope.launch {
+            val database = AppDatabase.getInstance(applicationContext)
+            val courses = database.appDao().getCoursesByProfessor(professorId)
+            setupCourseSpinner(courses, professorId)
+        }
+    }
+
+    private fun setupCourseSpinner(courses: List<Course>, professorId: Int) {
+        val spinner: Spinner = findViewById(R.id.mySpinner)
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, courses.map { it.courseName })
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinner.adapter = adapter
+
+        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: View, position: Int, id: Long) {
+                val selectedCourseId = courses[position].courseId
+                loadScatterChartData(selectedCourseId, professorId)
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>) {
+                // Optional: Handle the case where no item is selected if necessary
+            }
+        }
+    }
+
+    private fun loadScatterChartData(courseId: Int, professorId: Int) {
+        lifecycleScope.launch {
+            val database = AppDatabase.getInstance(applicationContext)
+            val selectedCourseActivities = database.appDao().getActivityDeadlinesByDayAndMonth(courseId, professorId)
+            val otherActivities = database.appDao().getAllActivitiesExceptSelectedCourse(courseId)
+
+            val selectedCourseEntries = selectedCourseActivities.map { Entry(it.month.toFloat(), it.day.toFloat()) }
+            val otherCourseEntries = otherActivities.map { Entry(it.month.toFloat(), it.day.toFloat()) }
+
+            updateScatterChart(selectedCourseEntries, otherCourseEntries)
+        }
+    }
+
+    private fun updateScatterChart(selectedCourseEntries: List<Entry>, otherCourseEntries: List<Entry>) {
+        val dataSet1 = ScatterDataSet(selectedCourseEntries, "Selected Course Activities").apply {
+            color = Color.BLUE
+            setScatterShape(ScatterChart.ScatterShape.CIRCLE)
+            scatterShapeSize = 10f
+        }
+        val dataSet2 = ScatterDataSet(otherCourseEntries, "Other Activities").apply {
+            color = Color.RED
+            setScatterShape(ScatterChart.ScatterShape.CIRCLE)
+            scatterShapeSize = 10f
+        }
+
+        val scatterChart: ScatterChart = findViewById(R.id.scatterChart)
+        scatterChart.data = ScatterData(dataSet1, dataSet2)
+        scatterChart.description.text = "Activity Deadlines by Month and Day"
+
+        // Set properties for the X Axis
+        scatterChart.xAxis.axisMinimum = 0f
+        scatterChart.xAxis.axisMaximum = 12f
+        scatterChart.xAxis.valueFormatter = IndexAxisValueFormatter(arrayOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+
+        // Set properties for the Left Y Axis
+        scatterChart.axisLeft.axisMinimum = 1f
+        scatterChart.axisLeft.axisMaximum = 31f
+
+        // Generally, you might want to disable the right Y axis if it is not used
+        scatterChart.axisRight.isEnabled = false
+
+        scatterChart.invalidate() // Refresh the chart
     }
 
 }

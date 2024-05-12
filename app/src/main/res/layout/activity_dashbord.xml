@@ -87,6 +87,31 @@
                     android:layout_width="match_parent"
                     android:layout_height="300dp" />
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Distribution of deadlines for a specific course"
+                    android:id="@+id/scatterChartLabel"
+                    android:textSize="18sp"
+                    android:textAlignment="center"
+                    android:layout_marginTop="16dp"
+                    android:textStyle="bold"
+                    android:textColor="@color/purple"/>
+
+                <Spinner
+                    android:id="@+id/mySpinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="16dp"/>
+
+
+                <com.github.mikephil.charting.charts.ScatterChart
+                    android:id="@+id/scatterChart"
+                    android:layout_width="match_parent"
+                    android:layout_height="300dp" />
+
+
             </LinearLayout>
         </ScrollView>
     </androidx.cardview.widget.CardView>

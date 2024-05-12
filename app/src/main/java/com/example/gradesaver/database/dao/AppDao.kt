@@ -2,6 +2,7 @@ package com.example.gradesaver.database.dao
 import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.example.gradesaver.dataClasses.ActivityCount
+import com.example.gradesaver.dataClasses.ActivityExclusionInfo
 import com.example.gradesaver.dataClasses.EnrollmentCountByCourse
 import com.example.gradesaver.dataClasses.MonthlyActivityCount
 import com.example.gradesaver.dataClasses.PendingActivityCountByStudent
@@ -244,5 +245,27 @@ interface AppDao {
 //    """)
 //    suspend fun getTotalDeadlinesByMonth(): List<MonthlyDeadlineCount>
 
+
+    @Query("""
+    SELECT a.activityName,
+           strftime('%d', datetime(a.dueDate / 1000, 'unixepoch')) AS day,
+           strftime('%m', datetime(a.dueDate / 1000, 'unixepoch')) AS month
+    FROM activities a
+    WHERE a.courseId = :courseId AND a.courseId IN (
+        SELECT c.courseId
+        FROM courses c
+        WHERE c.professorId = :professorId
+    )
+""")
+    suspend fun getActivityDeadlinesByDayAndMonth(courseId: Int, professorId: Int): List<ActivityExclusionInfo>
+
+    @Query("""
+    SELECT a.activityName,
+           strftime('%d', datetime(a.dueDate / 1000, 'unixepoch')) AS day,
+           strftime('%m', datetime(a.dueDate / 1000, 'unixepoch')) AS month
+    FROM activities a
+    WHERE a.courseId != :courseId
+""")
+    suspend fun getAllActivitiesExceptSelectedCourse(courseId: Int): List<ActivityExclusionInfo>
 
 }
