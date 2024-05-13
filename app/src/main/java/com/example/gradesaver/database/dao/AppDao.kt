@@ -4,8 +4,10 @@ import androidx.room.*
 import com.example.gradesaver.dataClasses.ActivityCount
 import com.example.gradesaver.dataClasses.ActivityExclusionInfo
 import com.example.gradesaver.dataClasses.ActivityReminderCount
+import com.example.gradesaver.dataClasses.ActivityReminders
 import com.example.gradesaver.dataClasses.EnrollmentCountByCourse
 import com.example.gradesaver.dataClasses.MonthlyActivityCount
+import com.example.gradesaver.dataClasses.MonthlyActivityDeadlines
 import com.example.gradesaver.dataClasses.PendingActivityCountByStudent
 import com.example.gradesaver.dataClasses.ReminderCountByActivity
 import com.example.gradesaver.dataClasses.ScheduleCountByActivityAndUser
@@ -279,5 +281,34 @@ interface AppDao {
 """)
     suspend fun getRemindersCountByActivity(courseId: Int): List<ActivityReminderCount>
 
+    @Query("""
+    SELECT a.activityType, COUNT(r.reminderId) AS numberOfReminders
+    FROM enrollments e
+    JOIN activities a ON e.courseId = a.courseId
+    LEFT JOIN reminderSchedules rs ON a.activityId = rs.activityId
+    LEFT JOIN reminders r ON rs.reminderScheduleId = r.reminderScheduleId
+    WHERE e.studentId = :studentId
+    GROUP BY a.activityType
+""")
+    suspend fun getReminderCountByActivityType(studentId: Int): List<ActivityReminders>
+
+    @Query("""
+    SELECT strftime('%Y-%m', datetime(a.dueDate / 1000, 'unixepoch')) AS month, COUNT(*) AS numberOfDeadlines
+    FROM activities a
+    JOIN enrollments e ON a.courseId = e.courseId
+    WHERE e.studentId = :studentId
+    GROUP BY strftime('%Y-%m', datetime(a.dueDate / 1000, 'unixepoch'))
+""")
+    suspend fun getActivityDeadlinesByMonth(studentId: Int): List<MonthlyActivityDeadlines>
+
+//    @Query("""
+//        SELECT c.courseName, COUNT(a.activityId) AS NumberOfActivities
+//        FROM courses c
+//        JOIN activities a ON c.courseId = a.courseId
+//        JOIN enrollments e ON c.courseId = e.courseId
+//        WHERE e.studentId = :studentId
+//        GROUP BY c.courseId
+//    """)
+//    suspend fun getActivityCountByCourse(studentId: Int): List<CourseActivityCount>
 
 }
