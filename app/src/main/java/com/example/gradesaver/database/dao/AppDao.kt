@@ -5,6 +5,7 @@ import com.example.gradesaver.dataClasses.ActivityCount
 import com.example.gradesaver.dataClasses.ActivityExclusionInfo
 import com.example.gradesaver.dataClasses.ActivityReminderCount
 import com.example.gradesaver.dataClasses.ActivityReminders
+import com.example.gradesaver.dataClasses.CourseActivityCount
 import com.example.gradesaver.dataClasses.EnrollmentCountByCourse
 import com.example.gradesaver.dataClasses.MonthlyActivityCount
 import com.example.gradesaver.dataClasses.MonthlyActivityDeadlines
@@ -301,14 +302,14 @@ interface AppDao {
 """)
     suspend fun getActivityDeadlinesByMonth(studentId: Int): List<MonthlyActivityDeadlines>
 
-//    @Query("""
-//        SELECT c.courseName, COUNT(a.activityId) AS NumberOfActivities
-//        FROM courses c
-//        JOIN activities a ON c.courseId = a.courseId
-//        JOIN enrollments e ON c.courseId = e.courseId
-//        WHERE e.studentId = :studentId
-//        GROUP BY c.courseId
-//    """)
-//    suspend fun getActivityCountByCourse(studentId: Int): List<CourseActivityCount>
+    @Query("""
+    SELECT c.courseName, COUNT(a.activityId) AS numberOfActivities
+    FROM courses c
+    JOIN activities a ON c.courseId = a.courseId
+    JOIN enrollments e ON c.courseId = e.courseId
+    WHERE e.studentId = :studentId
+    GROUP BY c.courseId
+""")
+    suspend fun getActivityCountByCourse(studentId: Int): List<CourseActivityCount>
 
 }
