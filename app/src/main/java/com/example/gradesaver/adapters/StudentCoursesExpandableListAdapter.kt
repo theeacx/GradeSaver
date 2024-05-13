@@ -11,6 +11,7 @@ import android.widget.Filterable
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import com.example.gradesaver.AddRemindersActivity
 import com.example.gradesaver.ManageRemindersActivity
 import com.example.gradesaver.R
@@ -106,39 +107,39 @@ class StudentCoursesExpandableListAdapter(
 //            }
 //        }
 //        return view
+//
+
         val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.student_child_item, parent, false)
         val activity = getChild(groupPosition, childPosition)
+        val course = getGroup(groupPosition)
+
+        // Format and set activity details
+        val activityNameTextView = view.findViewById<TextView>(R.id.activityName)
+        activityNameTextView.text = activity.activityName
+
+        val activityDueDateTextView = view.findViewById<TextView>(R.id.activityDueDate)
         val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
-        val currentDate = Date()
+        activityDueDateTextView.text = dateFormat.format(activity.dueDate)
 
-        // Set activity details
-        view.findViewById<TextView>(R.id.activityName).text = activity.activityName
-        view.findViewById<TextView>(R.id.activityDueDate).text = dateFormat.format(activity.dueDate)
-
-        // Get the ImageView references
-        val imageView = view.findViewById<ImageView>(R.id.addReminders)
+        val addRemindersImageView = view.findViewById<ImageView>(R.id.addReminders)
         val infoImageView = view.findViewById<ImageView>(R.id.ivInfo)
 
-        // Launch coroutine to check and update UI elements on the main thread
         coroutineScope.launch(Dispatchers.IO) {
             val hasReminders = AppDatabase.getInstance(context).appDao().getRemindersByActivity(activity.activityId).isNotEmpty()
-
             withContext(Dispatchers.Main) {
-                // Only show the add reminder icon if the due date is in the future and no reminders exist
-                if (activity.dueDate.after(currentDate) && !hasReminders) {
-                    imageView.visibility = View.VISIBLE
-                    imageView.setOnClickListener {
+                if (activity.dueDate.after(Date()) && !hasReminders) {
+                    addRemindersImageView.visibility = View.VISIBLE
+                    addRemindersImageView.setOnClickListener {
                         val intent = Intent(context, AddRemindersActivity::class.java).apply {
-                            putExtra("USER_DETAILS", user)  // Ensure user is serializable or pass user ID
+                            putExtra("USER_DETAILS", user)
                             putExtra("ACTIVITY", activity)
                         }
                         context.startActivity(intent)
                     }
                 } else {
-                    imageView.visibility = View.INVISIBLE
+                    addRemindersImageView.visibility = View.INVISIBLE
                 }
 
-                // Show info icon if there are any reminders (past or planned)
                 if (hasReminders) {
                     infoImageView.visibility = View.VISIBLE
                     infoImageView.setOnClickListener {
@@ -154,7 +155,34 @@ class StudentCoursesExpandableListAdapter(
             }
         }
 
+        // Implementing double click for detailed alert
+        view.setOnClickListener {
+            val clickTime = System.currentTimeMillis()
+            if (clickTime - lastClickTime < DOUBLE_CLICK_TIME_DELTA) {
+                // Double click detected
+                showProfessorInfoDialog(course, activity)
+            }
+            lastClickTime = clickTime
+        }
+
         return view
+    }
+
+    private var lastClickTime: Long = 0
+    private val DOUBLE_CLICK_TIME_DELTA: Long = 300 // milliseconds
+
+    private fun showProfessorInfoDialog(course: Course, activity: Activity) {
+        coroutineScope.launch {
+            val professor = AppDatabase.getInstance(context).appDao().getUserById(course.professorId)
+            withContext(Dispatchers.Main) {
+                val message = "Professor's Email: ${professor.email}\nDeadline: ${SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(activity.dueDate)}"
+                AlertDialog.Builder(context)
+                    .setTitle(activity.activityName)
+                    .setMessage(message)
+                    .setPositiveButton("OK") { dialog, which -> dialog.dismiss() }
+                    .show()
+            }
+        }
     }
 
 
