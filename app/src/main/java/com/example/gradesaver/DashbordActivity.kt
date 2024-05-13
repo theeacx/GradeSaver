@@ -20,6 +20,7 @@ import com.github.mikephil.charting.charts.HorizontalBarChart
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.charts.ScatterChart
+import com.github.mikephil.charting.components.Legend
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
@@ -84,45 +85,43 @@ class DashboardActivity : AppCompatActivity() {
             labels.add(enrollmentCount.courseName)  // Ensure course names are added correctly
         }
 
-        // Log labels for debugging
-        labels.forEach { label ->
-            Log.d("ChartLabel", "Course Name: $label")
-        }
-
         val dataSet = BarDataSet(entries, "No of enrollments")
         dataSet.color = resources.getColor(R.color.purple, null)
 
         val barData = BarData(dataSet)
         barChart.data = barData
-        barChart.setExtraOffsets(0f, 0f, 0f, 100f)
-        barChart.setScaleEnabled(true)
-        // Set the formatter with the labels after setting the data
+        // Adjust offsets to provide more space, particularly at the bottom
+        barChart.setExtraOffsets(5f, 30f, 5f, 70f)  // Left, top, right, bottom increases
+
         barChart.xAxis.apply {
             valueFormatter = IndexAxisValueFormatter(labels)
             granularity = 1f
             isGranularityEnabled = true
             setLabelCount(minOf(labels.size, 6))  // Show up to 6 labels at a time
-//            setLabelCount(labels.size)
             setCenterAxisLabels(true)
             labelRotationAngle = 45f
             textSize = 10f
             position = XAxis.XAxisPosition.BOTTOM
             setDrawLabels(true)
-            isGranularityEnabled = true
-//            axisMinimum = 0.5f
-//            axisMaximum = data.size.toFloat()
             spaceMin = 0.5f
             spaceMax = 0.5f
             setAvoidFirstLastClipping(true)
             textColor = Color.BLACK  // Ensure text color is visible
         }
 
-//        barChart.description.text = "Enrollment Counts by Course"
+        barChart.legend.apply {
+            verticalAlignment = Legend.LegendVerticalAlignment.TOP
+            horizontalAlignment = Legend.LegendHorizontalAlignment.CENTER
+            orientation = Legend.LegendOrientation.HORIZONTAL
+            setDrawInside(false)
+            yOffset = 12f  // Adjust the Y offset to give more space
+        }
+
+        barChart.description.text = "Enrollment Counts by Course"
         barChart.animateY(1000)
-        barChart.extraBottomOffset = 20f  // Ensure there is space for rotated labels
-        barChart.setVisibleXRangeMaximum(5f)  // You can limit visible count to enhance readability
         barChart.invalidate()  // Refresh the chart
     }
+
 
     private fun loadMonthlyActivityData(lineChart: LineChart, professorId: Int) {
         lifecycleScope.launch {
@@ -345,7 +344,7 @@ class DashboardActivity : AppCompatActivity() {
                 setDrawAxisLine(false)
                 granularity = 1f
                 labelCount = labels.size
-                textSize = 10f // Adjust text size for better fit
+                textSize = 12f // Increased text size for better visibility
                 labelRotationAngle = -45f // Rotate labels to avoid overlap
             }
 
@@ -359,10 +358,14 @@ class DashboardActivity : AppCompatActivity() {
             barChart.description.isEnabled = false // Disable the description
             barChart.legend.isEnabled = false // Disable the legend if not needed
 
+            // Increase the bottom offset to give more space for the rotated labels
+            barChart.setExtraOffsets(80f, 10f, 5f, 30f) // Left, Top, Right, Bottom
+
             barChart.animateY(1000)
             barChart.invalidate() // Refresh the chart
         }
     }
+
 
 
 }
