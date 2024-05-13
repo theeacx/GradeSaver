@@ -5,14 +5,19 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.gradesaver.dataClasses.ActivityReminders
+import com.example.gradesaver.dataClasses.MonthlyActivityDeadlines
 import com.example.gradesaver.database.AppDatabase
 import com.example.gradesaver.database.entities.User
 import com.github.mikephil.charting.charts.BarChart
+import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.Legend
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import kotlinx.coroutines.launch
 
@@ -24,6 +29,7 @@ class StudentDashbordActivity : AppCompatActivity() {
         val user = intent.getSerializableExtra("USER_DETAILS") as? User
         user?.let {
             loadActivityRemindersByType(it.userId)
+            loadActivityDeadlinesByMonth(it.userId)
         }
     }
     private fun loadActivityRemindersByType(studentId: Int) {
@@ -88,6 +94,68 @@ class StudentDashbordActivity : AppCompatActivity() {
 
         barChart.animateY(1000)
         barChart.invalidate() // Refresh the chart
+    }
+
+    private fun loadActivityDeadlinesByMonth(studentId: Int) {
+        val lineChart: LineChart = findViewById(R.id.lineChart)
+        lifecycleScope.launch {
+            val database = AppDatabase.getInstance(applicationContext)
+            val monthlyDeadlines = database.appDao().getActivityDeadlinesByMonth(studentId)
+
+            updateLineChart(lineChart, monthlyDeadlines)
+        }
+    }
+
+    private fun updateLineChart(lineChart: LineChart, data: List<MonthlyActivityDeadlines>) {
+        val entries = ArrayList<Entry>()
+        val labels = ArrayList<String>()
+
+        data.forEachIndexed { index, deadline ->
+            entries.add(Entry(index.toFloat(), deadline.numberOfDeadlines.toFloat()))
+            labels.add(deadline.month)
+        }
+
+        val dataSet = LineDataSet(entries, "Number of Deadlines by Month")
+        dataSet.color = Color.parseColor("#8692f7")  // Main color of your app
+        dataSet.valueTextColor = Color.WHITE
+        dataSet.valueTextSize = 10f
+
+        val lineData = LineData(dataSet)
+        lineChart.data = lineData
+
+        lineChart.xAxis.apply {
+            valueFormatter = IndexAxisValueFormatter(labels)
+            position = XAxis.XAxisPosition.BOTTOM
+            setDrawGridLines(true)
+            granularity = 1f
+            labelRotationAngle = -45f  // Rotate labels to make them more readable
+            textSize = 10f
+        }
+
+        lineChart.axisLeft.apply {
+            axisMinimum = 0f  // Start at zero
+            granularity = 1f  // Interval of 1
+        }
+
+        lineChart.axisRight.isEnabled = false  // Disable right Y-axis
+
+        lineChart.description.text = "Monthly Deadlines"
+        lineChart.description.isEnabled = true
+
+        // Move the legend above the chart
+        lineChart.legend.apply {
+            verticalAlignment = Legend.LegendVerticalAlignment.TOP
+            horizontalAlignment = Legend.LegendHorizontalAlignment.CENTER
+            orientation = Legend.LegendOrientation.HORIZONTAL
+            setDrawInside(false)
+            yOffset = 10f  // Adjust the Y offset to give more space
+        }
+
+        // Provide more space at the bottom to ensure labels are not cut off
+        lineChart.setExtraOffsets(5f, 10f, 5f, 20f)  // Left, Top, Right, Bottom offsets
+
+        lineChart.animateX(1000)
+        lineChart.invalidate()  // Refresh the chart
     }
 
 
