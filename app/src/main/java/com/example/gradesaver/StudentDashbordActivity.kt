@@ -160,7 +160,7 @@ class StudentDashbordActivity : AppCompatActivity() {
         }
 
         // Provide more space at the bottom to ensure labels are not cut off
-        lineChart.setExtraOffsets(5f, 10f, 5f, 20f)  // Left, Top, Right, Bottom offsets
+        lineChart.setExtraOffsets(5f, 10f, 5f, 30f)  // Left, Top, Right, Bottom offsets
 
         lineChart.animateX(1000)
         lineChart.invalidate()  // Refresh the chart
