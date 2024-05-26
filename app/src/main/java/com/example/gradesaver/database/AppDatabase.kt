@@ -1,11 +1,13 @@
 package com.example.gradesaver.database
+
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.example.gradesaver.database.entities.*
 import com.example.gradesaver.database.dao.AppDao
+import com.example.gradesaver.database.entities.*
+
 @Database(
     entities = [
         User::class,
@@ -14,9 +16,11 @@ import com.example.gradesaver.database.dao.AppDao
         Enrollment::class,
         ReminderSchedule::class,
         Reminder::class,
-        UserActivity::class
+        UserActivity::class,
+        PersonalActivity::class,
+        CheckedActivity::class
     ],
-    version = 1,
+    version = 4,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

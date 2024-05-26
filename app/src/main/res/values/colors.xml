@@ -3,5 +3,12 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="purple">#8692f7</color>
-
+    <color name="light_gray">#D3D3D3</color>
+    <color name="colorTest">#FFC107</color>
+    <color name="colorMidterm">#FF9800</color>
+    <color name="colorEssay">#4CAF50</color>
+    <color name="colorExam">#F44336</color>
+    <color name="colorPresentation">#3F51B5</color>
+    <color name="colorProject">#9C27B0</color>
+    <color name="defaultActivityColor">#BF3262</color>
 </resources>

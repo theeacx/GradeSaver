@@ -1,25 +1,11 @@
 package com.example.gradesaver.database.dao
+
 import androidx.lifecycle.LiveData
 import androidx.room.*
-import com.example.gradesaver.dataClasses.ActivityCount
-import com.example.gradesaver.dataClasses.ActivityExclusionInfo
-import com.example.gradesaver.dataClasses.ActivityReminderCount
-import com.example.gradesaver.dataClasses.ActivityReminders
-import com.example.gradesaver.dataClasses.CourseActivityCount
-import com.example.gradesaver.dataClasses.EnrollmentCountByCourse
-import com.example.gradesaver.dataClasses.MonthlyActivityCount
-import com.example.gradesaver.dataClasses.MonthlyActivityDeadlines
-import com.example.gradesaver.dataClasses.PendingActivityCountByStudent
-import com.example.gradesaver.dataClasses.ReminderCountByActivity
-import com.example.gradesaver.dataClasses.ScheduleCountByActivityAndUser
-import com.example.gradesaver.database.entities.Activity
-import com.example.gradesaver.database.entities.Course
-import com.example.gradesaver.database.entities.Enrollment
-import com.example.gradesaver.database.entities.Reminder
-import com.example.gradesaver.database.entities.ReminderSchedule
-import com.example.gradesaver.database.entities.User
-import com.example.gradesaver.database.entities.UserActivity
+import com.example.gradesaver.dataClasses.*
+import com.example.gradesaver.database.entities.*
 import java.util.*
+
 @Dao
 interface AppDao {
     // Users CRUD
@@ -56,7 +42,7 @@ interface AppDao {
 
     // Activities CRUD
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertActivity(activity: Activity)
+    suspend fun insertActivity(activity: Activity): Long
 
     @Update
     suspend fun updateActivity(activity: Activity)
@@ -83,8 +69,6 @@ interface AppDao {
     // ReminderSchedules CRUD
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertReminderSchedule(reminderSchedule: ReminderSchedule): Long
-
-
 
     @Update
     suspend fun updateReminderSchedule(reminderSchedule: ReminderSchedule)
@@ -119,7 +103,6 @@ interface AppDao {
     suspend fun getUserActivitiesByStudent(studentId: Int): List<UserActivity>
 
     // Complex Queries
-    // Example: Get all courses taught by a specific professor
     @Transaction
     @Query("SELECT * FROM courses WHERE professorId = :professorId")
     suspend fun getCoursesByProfessor(professorId: Int): MutableList<Course>
@@ -158,7 +141,7 @@ interface AppDao {
     SELECT r.* FROM reminders r
     INNER JOIN reminderSchedules rs ON r.reminderScheduleId = rs.reminderScheduleId
     WHERE rs.activityId = :activityId
-""")
+    """)
     suspend fun getRemindersByActivity(activityId: Int): List<Reminder>
 
     @Query("SELECT * FROM reminderSchedules WHERE studentId = :userId AND activityId = :activityId ORDER BY reminderScheduleId DESC LIMIT 1")
@@ -173,10 +156,7 @@ interface AppDao {
     @Query("SELECT * FROM activities WHERE courseId = :courseId")
     fun fetchActivitiesByCourseAsLiveData(courseId: Int): LiveData<List<Activity>>
 
-
-
-
-    @Query("SELECT * FROM activities WHERE activityId = :activityId")
+    @Query("SELECT * FROM activities WHERE activityId = :activityId LIMIT 1")
     fun getActivityById(activityId: Int): Activity?
 
     @Query("""
@@ -185,19 +165,17 @@ interface AppDao {
     WHERE courseId IN (SELECT courseId FROM courses WHERE professorId = :professorId)
     GROUP BY strftime('%m', datetime(dueDate / 1000, 'unixepoch'))
     ORDER BY strftime('%m', datetime(dueDate / 1000, 'unixepoch'))
-""")
+    """)
     suspend fun getActivityCountsByMonth(professorId: Int): List<MonthlyActivityCount>
-
-
-
 
     @Query("""
     SELECT activityType, COUNT(*) as activityCount
     FROM activities
     WHERE courseId IN (SELECT courseId FROM courses WHERE professorId = :professorId)
     GROUP BY activityType
-""")
+    """)
     suspend fun getActivityCountsByType(professorId: Int): List<ActivityCount>
+
     @Query("""
     SELECT a.activityName, COUNT(*) as reminderCount
     FROM reminders r
@@ -205,7 +183,7 @@ interface AppDao {
     JOIN activities a ON rs.activityId = a.activityId
     WHERE a.courseId IN (SELECT courseId FROM courses WHERE professorId = :professorId)
     GROUP BY a.activityId
-""")
+    """)
     suspend fun getReminderCountsByActivity(professorId: Int): List<ReminderCountByActivity>
 
     @Query("""
@@ -215,9 +193,8 @@ interface AppDao {
     JOIN users u ON rs.studentId = u.userId
     WHERE a.courseId IN (SELECT courseId FROM courses WHERE professorId = :professorId)
     GROUP BY rs.activityId, rs.studentId
-""")
+    """)
     suspend fun getScheduleCountsByActivityAndUser(professorId: Int): List<ScheduleCountByActivityAndUser>
-
 
     @Query("""
     SELECT c.courseName, COUNT(*) as enrolledCount
@@ -225,9 +202,8 @@ interface AppDao {
     JOIN courses c ON e.courseId = c.courseId
     WHERE c.professorId = :professorId
     GROUP BY c.courseId
-""")
+    """)
     suspend fun getEnrollmentCountsByCourse(professorId: Int): List<EnrollmentCountByCourse>
-
 
     @Query("""
     SELECT a.activityName, u.email, COUNT(ua.userActivityId) as pendingActivities
@@ -237,18 +213,8 @@ interface AppDao {
     WHERE a.dueDate > CURRENT_DATE AND ua.isCompleted = 0
     AND a.courseId IN (SELECT courseId FROM courses WHERE professorId = :professorId)
     GROUP BY a.activityId, ua.studentId
-""")
+    """)
     suspend fun getPendingActivitiesByStudent(professorId: Int): List<PendingActivityCountByStudent>
-
-
-//    @Query("""
-//        SELECT strftime('%m', dueDate) as month, COUNT(*) as totalDeadlines
-//        FROM activities
-//        WHERE courseId IN (SELECT courseId FROM courses)
-//        GROUP BY strftime('%m', dueDate)
-//    """)
-//    suspend fun getTotalDeadlinesByMonth(): List<MonthlyDeadlineCount>
-
 
     @Query("""
     SELECT a.activityName,
@@ -260,7 +226,7 @@ interface AppDao {
         FROM courses c
         WHERE c.professorId = :professorId
     )
-""")
+    """)
     suspend fun getActivityDeadlinesByDayAndMonth(courseId: Int, professorId: Int): List<ActivityExclusionInfo>
 
     @Query("""
@@ -269,7 +235,7 @@ interface AppDao {
            strftime('%m', datetime(a.dueDate / 1000, 'unixepoch')) AS month
     FROM activities a
     WHERE a.courseId != :courseId
-""")
+    """)
     suspend fun getAllActivitiesExceptSelectedCourse(courseId: Int): List<ActivityExclusionInfo>
 
     @Query("""
@@ -279,7 +245,7 @@ interface AppDao {
     LEFT JOIN reminders r ON rs.reminderScheduleId = r.reminderScheduleId
     WHERE a.courseId = :courseId
     GROUP BY a.activityId
-""")
+    """)
     suspend fun getRemindersCountByActivity(courseId: Int): List<ActivityReminderCount>
 
     @Query("""
@@ -290,7 +256,7 @@ interface AppDao {
     LEFT JOIN reminders r ON rs.reminderScheduleId = r.reminderScheduleId
     WHERE e.studentId = :studentId
     GROUP BY a.activityType
-""")
+    """)
     suspend fun getReminderCountByActivityType(studentId: Int): List<ActivityReminders>
 
     @Query("""
@@ -299,7 +265,7 @@ interface AppDao {
     JOIN enrollments e ON a.courseId = e.courseId
     WHERE e.studentId = :studentId
     GROUP BY strftime('%Y-%m', datetime(a.dueDate / 1000, 'unixepoch'))
-""")
+    """)
     suspend fun getActivityDeadlinesByMonth(studentId: Int): List<MonthlyActivityDeadlines>
 
     @Query("""
@@ -309,7 +275,113 @@ interface AppDao {
     JOIN enrollments e ON c.courseId = e.courseId
     WHERE e.studentId = :studentId
     GROUP BY c.courseId
-""")
+    """)
     suspend fun getActivityCountByCourse(studentId: Int): List<CourseActivityCount>
 
+    @Insert
+    suspend fun insertPersonalActivity(personalActivity: PersonalActivity): Long
+
+    @Query("SELECT * FROM personalActivities WHERE userId = :userId")
+    suspend fun getPersonalActivitiesByUser(userId: Int): List<PersonalActivity>
+
+    @Delete
+    suspend fun deletePersonalActivity(personalActivity: PersonalActivity): Int
+
+    @Query("SELECT * FROM personalActivities WHERE userId = :userId AND dueDate BETWEEN :dayStart AND :dayEnd")
+    suspend fun getPersonalActivitiesByDay(userId: Int, dayStart: Date, dayEnd: Date): List<PersonalActivity>
+
+    @Query("SELECT * FROM activities WHERE courseId = :courseId AND dueDate BETWEEN :dayStart AND :dayEnd")
+    fun getActivitiesForDay(courseId: Int, dayStart: Date, dayEnd: Date): List<Activity>
+
+    // Function to fetch activities for all courses by a professor on a specific day
+    @Query("""
+        SELECT a.* FROM activities a
+        JOIN courses c ON a.courseId = c.courseId
+        WHERE c.professorId = :professorId AND 
+              a.dueDate BETWEEN :dayStart AND :dayEnd
+    """)
+    suspend fun getActivitiesForProfessorByDay(professorId: Int, dayStart: Date, dayEnd: Date): List<Activity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCheckedActivity(checkedActivity: CheckedActivity): Long
+
+    @Update
+    suspend fun updateCheckedActivity(checkedActivity: CheckedActivity)
+
+    @Query("SELECT * FROM checkedActivities WHERE userId = :userId AND activityId = :activityId LIMIT 1")
+    suspend fun getCheckedActivityByUserAndActivity(userId: Int, activityId: Int): CheckedActivity?
+
+    @Query("SELECT * FROM checkedActivities WHERE userId = :userId AND personalActivityId = :personalActivityId LIMIT 1")
+    suspend fun getCheckedActivityByUserAndPersonalActivity(userId: Int, personalActivityId: Int): CheckedActivity?
+
+    @Query("SELECT * FROM checkedActivities WHERE userId = :userId AND reminderId = :reminderId LIMIT 1")
+    suspend fun getCheckedActivityByUserAndReminder(userId: Int, reminderId: Int): CheckedActivity?
+
+    @Query("SELECT * FROM checkedActivities WHERE userId = :userId AND activityId = :activityId")
+    fun getCheckedActivityLiveData(userId: Int, activityId: Int): LiveData<CheckedActivity>
+
+    @Query("SELECT * FROM checkedActivities WHERE userId = :userId AND personalActivityId = :personalActivityId")
+    fun getCheckedPersonalActivityLiveData(userId: Int, personalActivityId: Int): LiveData<CheckedActivity>
+
+    @Query("SELECT * FROM checkedActivities WHERE userId = :userId")
+    suspend fun getCheckedActivitiesByUser(userId: Int): List<CheckedActivity>
+
+    @Delete
+    suspend fun deleteCheckedActivity(checkedActivity: CheckedActivity)
+
+    @Update
+    suspend fun updatePersonalActivity(personalActivity: PersonalActivity)
+
+    @Query("DELETE FROM checkedActivities WHERE userId = :userId AND activityId = :activityId")
+    suspend fun deleteCheckedActivityByActivity(userId: Int, activityId: Int)
+
+    @Query("DELETE FROM checkedActivities WHERE userId = :userId AND personalActivityId = :personalActivityId")
+    suspend fun deleteCheckedActivityByPersonalActivity(userId: Int, personalActivityId: Int)
+
+    @Query("DELETE FROM checkedActivities WHERE userId = :userId AND reminderId = :reminderId")
+    suspend fun deleteCheckedActivityByReminder(userId: Int, reminderId: Int)
+
+    @Query("SELECT * FROM personalActivities WHERE personalActivityId = :personalActivityId")
+    suspend fun getPersonalActivityById(personalActivityId: Int): PersonalActivity?
+
+    @Query("""
+        SELECT a.*
+        FROM activities a
+        JOIN courses c ON a.courseId = c.courseId
+        JOIN enrollments e ON c.courseId = e.courseId
+        WHERE e.studentId = :userId
+    """)
+    suspend fun getActivitiesByUser(userId: Int): List<Activity>
+
+    @Query("""
+        SELECT a.*
+        FROM activities a
+        JOIN courses c ON a.courseId = c.courseId
+        JOIN enrollments e ON c.courseId = e.courseId
+        WHERE e.studentId = :userId AND a.dueDate BETWEEN :startOfDay AND :endOfDay
+    """)
+    suspend fun getTodaysActivitiesByUser(userId: Int, startOfDay: Date, endOfDay: Date): List<Activity>
+
+    @Query("SELECT * FROM personalActivities WHERE userId = :userId AND dueDate BETWEEN :startOfDay AND :endOfDay")
+    suspend fun getTodaysPersonalActivitiesByUser(userId: Int, startOfDay: Date, endOfDay: Date): List<PersonalActivity>
+
+    @Query("SELECT * FROM checkedActivities WHERE userId = :userId AND personalActivityId = :personalActivityId")
+    fun getCheckedPersonalActivity(userId: Int, personalActivityId: Int): CheckedActivity?
+
+    @Query("SELECT * FROM checkedActivities WHERE userId = :userId AND activityId = :activityId")
+    fun getCheckedActivity(userId: Int, activityId: Int): CheckedActivity?
+
+    @Query("SELECT * FROM checkedActivities WHERE userId = :userId AND reminderId = :reminderId")
+    fun getCheckedReminder(userId: Int, reminderId: Int): CheckedActivity?
+
+    @Query("""
+        SELECT r.*, rs.activityId
+        FROM reminders r
+        INNER JOIN reminderSchedules rs ON r.reminderScheduleId = rs.reminderScheduleId
+        WHERE rs.studentId = :userId AND r.reminderDate BETWEEN :startOfDay AND :endOfDay
+    """)
+    suspend fun getRemindersWithActivityForUserByDay(userId: Int, startOfDay: Date, endOfDay: Date): List<ReminderWithActivity>
+
+    @Query("SELECT * FROM reminders WHERE reminderId = :reminderId LIMIT 1")
+    suspend fun getReminderById(reminderId: Int): Reminder?
 }

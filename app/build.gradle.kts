@@ -16,6 +16,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables.useSupportLibrary = true
     }
 
     buildTypes {
@@ -38,7 +39,7 @@ android {
 
 dependencies {
 
-    implementation("androidx.core:core-ktx:1.9.0")
+    implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
@@ -81,4 +82,14 @@ dependencies {
   //material components
     implementation("androidx.compose.material:material:1.6.4")
     implementation ("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
+    implementation ("com.github.prolificinteractive:material-calendarview:2.0.1"){
+        exclude("com.android.support")
+    }
+
+    implementation ("com.github.kizitonwose:CalendarView:0.4.3")
+
+    implementation ("com.jakewharton.threetenabp:threetenabp:1.3.1")
+
+    implementation ("com.google.code.gson:gson:2.10.1")
 }
