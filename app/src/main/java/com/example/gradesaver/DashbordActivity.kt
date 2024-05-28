@@ -19,7 +19,7 @@ import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.charts.HorizontalBarChart
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.charts.PieChart
-import com.github.mikephil.charting.charts.ScatterChart
+import com.github.mikephil.charting.charts.RadarChart
 import com.github.mikephil.charting.components.Legend
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.BarData
@@ -31,13 +31,18 @@ import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
-import com.github.mikephil.charting.data.ScatterData
-import com.github.mikephil.charting.data.ScatterDataSet
+import com.github.mikephil.charting.data.RadarData
+import com.github.mikephil.charting.data.RadarDataSet
+import com.github.mikephil.charting.data.RadarEntry
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.github.mikephil.charting.formatter.PercentFormatter
 import kotlinx.coroutines.launch
 
 class DashboardActivity : AppCompatActivity() {
+    private lateinit var radarChart: RadarChart
+    private lateinit var horizontalBarChart: HorizontalBarChart
+    private lateinit var courseSpinner: Spinner
+    private lateinit var reminderSpinner: Spinner
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,6 +54,10 @@ class DashboardActivity : AppCompatActivity() {
         val barChart: BarChart = findViewById(R.id.barChart)
         val lineChart: LineChart = findViewById(R.id.lineChart)
         val pieChart: PieChart = findViewById(R.id.pieChart)
+        radarChart = findViewById(R.id.radarChart)
+        horizontalBarChart = findViewById(R.id.horizontalBarChart)
+        courseSpinner = findViewById(R.id.courseSpinner)
+        reminderSpinner = findViewById(R.id.reminderSpinner)
 
         // Load enrollment data if userId is valid
         if (userId != -1) {
@@ -57,7 +66,7 @@ class DashboardActivity : AppCompatActivity() {
                 loadMonthlyActivityData(lineChart, userId)
                 loadActivityTypeData(pieChart, userId)
                 loadCoursesAndSetupSpinner(userId)
-                loadCoursesAndSetupSpinners2(userId)
+                loadReminderCoursesAndSetupSpinner(userId)
             }
         } else {
             // Handle error case where userId isn't passed correctly
@@ -218,20 +227,19 @@ class DashboardActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val database = AppDatabase.getInstance(applicationContext)
             val courses = database.appDao().getCoursesByProfessor(professorId)
-            setupCourseSpinner(courses, professorId)
+            setupCourseSpinner(courses)
         }
     }
 
-    private fun setupCourseSpinner(courses: List<Course>, professorId: Int) {
-        val spinner: Spinner = findViewById(R.id.mySpinner)
+    private fun setupCourseSpinner(courses: List<Course>) {
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, courses.map { it.courseName })
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinner.adapter = adapter
+        courseSpinner.adapter = adapter
 
-        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+        courseSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, view: View, position: Int, id: Long) {
                 val selectedCourseId = courses[position].courseId
-                loadScatterChartData(selectedCourseId, professorId)
+                loadRadarChartData(selectedCourseId)
             }
 
             override fun onNothingSelected(parent: AdapterView<*>) {
@@ -240,81 +248,86 @@ class DashboardActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadScatterChartData(courseId: Int, professorId: Int) {
+    private fun loadRadarChartData(courseId: Int) {
         lifecycleScope.launch {
             val database = AppDatabase.getInstance(applicationContext)
-            val selectedCourseActivities = database.appDao().getActivityDeadlinesByDayAndMonth(courseId, professorId)
-            val otherActivities = database.appDao().getAllActivitiesExceptSelectedCourse(courseId)
+            val selectedCourseActivities = database.appDao().getActivityDeadlinesByDay(courseId)
+            val otherActivities = database.appDao().getAllActivityDeadlinesByDayExceptCourse(courseId)
 
-            val selectedCourseEntries = selectedCourseActivities.map { Entry(it.month.toFloat(), it.day.toFloat()) }
-            val otherCourseEntries = otherActivities.map { Entry(it.month.toFloat(), it.day.toFloat()) }
+            // Ensure data for all days from 1 to 31 is present
+            val allDays = (1..31).map { it.toString() }
 
-            updateScatterChart(selectedCourseEntries, otherCourseEntries)
+            val selectedCourseMap = selectedCourseActivities.associateBy { it.day.toString() }
+            val otherActivitiesMap = otherActivities.associateBy { it.day.toString() }
+
+            val selectedCourseEntries = allDays.map { day ->
+                RadarEntry(selectedCourseMap[day]?.count?.toFloat() ?: 0f)
+            }
+
+            val otherCourseEntries = allDays.map { day ->
+                RadarEntry(otherActivitiesMap[day]?.count?.toFloat() ?: 0f)
+            }
+
+            updateRadarChart(selectedCourseEntries, otherCourseEntries, allDays)
         }
     }
 
-    private fun updateScatterChart(selectedCourseEntries: List<Entry>, otherCourseEntries: List<Entry>) {
-        val dataSet1 = ScatterDataSet(selectedCourseEntries, "Selected Course Activities").apply {
+    private fun updateRadarChart(selectedCourseEntries: List<RadarEntry>, otherCourseEntries: List<RadarEntry>, labels: List<String>) {
+        val dataSet1 = RadarDataSet(selectedCourseEntries, "Selected Course Activities").apply {
             color = Color.BLUE
-            setScatterShape(ScatterChart.ScatterShape.CIRCLE)
-            scatterShapeSize = 10f
+            fillColor = Color.BLUE
+            setDrawFilled(true)
+            fillAlpha = 180
         }
-        val dataSet2 = ScatterDataSet(otherCourseEntries, "Other Activities").apply {
+        val dataSet2 = RadarDataSet(otherCourseEntries, "Other Activities").apply {
             color = Color.RED
-            setScatterShape(ScatterChart.ScatterShape.CIRCLE)
-            scatterShapeSize = 10f
+            fillColor = Color.RED
+            setDrawFilled(true)
+            fillAlpha = 180
         }
 
-        val scatterChart: ScatterChart = findViewById(R.id.scatterChart)
-        scatterChart.data = ScatterData(dataSet1, dataSet2)
-        scatterChart.description.text = "Activity Deadlines by Month and Day"
+        val radarData = RadarData(dataSet1, dataSet2)
+        radarChart.data = radarData
+        radarChart.description.text = "Activity Deadlines by Day"
 
-        // Set properties for the X Axis
-        scatterChart.xAxis.axisMinimum = 0f
-        scatterChart.xAxis.axisMaximum = 12f
-        scatterChart.xAxis.valueFormatter = IndexAxisValueFormatter(arrayOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+        val xAxis = radarChart.xAxis
+        xAxis.valueFormatter = IndexAxisValueFormatter(labels)
+        xAxis.textSize = 9f
 
-        // Set properties for the Left Y Axis
-        scatterChart.axisLeft.axisMinimum = 1f
-        scatterChart.axisLeft.axisMaximum = 31f
-
-        // Generally, you might want to disable the right Y axis if it is not used
-        scatterChart.axisRight.isEnabled = false
-
-        scatterChart.invalidate() // Refresh the chart
+        radarChart.yAxis.axisMinimum = 0f
+        radarChart.invalidate() // Refresh the chart
     }
 
-    private fun loadCoursesAndSetupSpinners2(professorId: Int) {
+
+    private fun loadReminderCoursesAndSetupSpinner(professorId: Int) {
         lifecycleScope.launch {
             val database = AppDatabase.getInstance(applicationContext)
             val courses = database.appDao().getCoursesByProfessor(professorId)
-            setupSpinner2(findViewById(R.id.courseSpinner), courses)
+            setupReminderCourseSpinner(courses)
         }
     }
 
-    private fun setupSpinner2(spinner: Spinner, courses: List<Course>) {
+    private fun setupReminderCourseSpinner(courses: List<Course>) {
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, courses.map { it.courseName })
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinner.adapter = adapter
+        reminderSpinner.adapter = adapter
 
-        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+        reminderSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, view: View, position: Int, id: Long) {
                 val selectedCourseId = courses[position].courseId
-                if (spinner.id == R.id.courseSpinner) {
-                    loadReminderDistributionData(selectedCourseId)
-                }
+                loadHorizontalBarChartData(selectedCourseId)
             }
 
             override fun onNothingSelected(parent: AdapterView<*>) {
-                // Optional handling for no selection
+                // Optional: Handle the case where no item is selected if necessary
             }
         }
     }
 
-    private fun loadReminderDistributionData(courseId: Int) {
+    private fun loadHorizontalBarChartData(courseId: Int) {
         lifecycleScope.launch {
             val database = AppDatabase.getInstance(applicationContext)
-            val reminderCounts = database.appDao().getRemindersCountByActivity(courseId);
+            val reminderCounts = database.appDao().getRemindersCountByActivity(courseId)
 
             val entries = ArrayList<BarEntry>()
             val labels = ArrayList<String>()
@@ -333,11 +346,10 @@ class DashboardActivity : AppCompatActivity() {
                 barWidth = 0.4f // Set bar width
             }
 
-            val barChart: HorizontalBarChart = findViewById(R.id.horizontalBarChart)
-            barChart.data = data
-            barChart.setFitBars(true) // Make the x-axis fit exactly all bars
+            horizontalBarChart.data = data
+            horizontalBarChart.setFitBars(true) // Make the x-axis fit exactly all bars
 
-            barChart.xAxis.apply {
+            horizontalBarChart.xAxis.apply {
                 valueFormatter = IndexAxisValueFormatter(labels)
                 position = XAxis.XAxisPosition.BOTTOM_INSIDE
                 setDrawGridLines(false)
@@ -348,24 +360,21 @@ class DashboardActivity : AppCompatActivity() {
                 labelRotationAngle = -45f // Rotate labels to avoid overlap
             }
 
-            barChart.axisLeft.apply {
+            horizontalBarChart.axisLeft.apply {
                 axisMinimum = 0f // Start at zero
                 granularity = 1f // Interval of 1
             }
 
-            barChart.axisRight.isEnabled = true // Enable right axis to balance the view
+            horizontalBarChart.axisRight.isEnabled = true // Enable right axis to balance the view
 
-            barChart.description.isEnabled = false // Disable the description
-            barChart.legend.isEnabled = false // Disable the legend if not needed
+            horizontalBarChart.description.isEnabled = false // Disable the description
+            horizontalBarChart.legend.isEnabled = false // Disable the legend if not needed
 
             // Increase the bottom offset to give more space for the rotated labels
-            barChart.setExtraOffsets(80f, 10f, 5f, 30f) // Left, Top, Right, Bottom
+            horizontalBarChart.setExtraOffsets(80f, 10f, 5f, 30f) // Left, Top, Right, Bottom
 
-            barChart.animateY(1000)
-            barChart.invalidate() // Refresh the chart
+            horizontalBarChart.animateY(1000)
+            horizontalBarChart.invalidate() // Refresh the chart
         }
     }
-
-
-
 }

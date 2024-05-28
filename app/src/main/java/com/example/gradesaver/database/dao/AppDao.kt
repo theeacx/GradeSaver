@@ -217,20 +217,18 @@ interface AppDao {
     suspend fun getPendingActivitiesByStudent(professorId: Int): List<PendingActivityCountByStudent>
 
     @Query("""
-    SELECT a.activityName,
+    SELECT a.activityId,
+           a.activityName,
            strftime('%d', datetime(a.dueDate / 1000, 'unixepoch')) AS day,
            strftime('%m', datetime(a.dueDate / 1000, 'unixepoch')) AS month
     FROM activities a
-    WHERE a.courseId = :courseId AND a.courseId IN (
-        SELECT c.courseId
-        FROM courses c
-        WHERE c.professorId = :professorId
-    )
+    WHERE a.courseId = :courseId
     """)
-    suspend fun getActivityDeadlinesByDayAndMonth(courseId: Int, professorId: Int): List<ActivityExclusionInfo>
+    suspend fun getActivityDeadlinesByDayAndMonth(courseId: Int): List<ActivityExclusionInfo>
 
     @Query("""
-    SELECT a.activityName,
+    SELECT a.activityId,
+           a.activityName,
            strftime('%d', datetime(a.dueDate / 1000, 'unixepoch')) AS day,
            strftime('%m', datetime(a.dueDate / 1000, 'unixepoch')) AS month
     FROM activities a
@@ -384,4 +382,85 @@ interface AppDao {
 
     @Query("SELECT * FROM reminders WHERE reminderId = :reminderId LIMIT 1")
     suspend fun getReminderById(reminderId: Int): Reminder?
+
+    @Insert
+    fun insertUsers(users: List<User>): List<Long>
+
+    @Insert
+    fun insertCourses(courses: List<Course>): List<Long>
+
+    @Insert
+    fun insertEnrollments(enrollments: List<Enrollment>): List<Long>
+
+    @Insert
+    fun insertActivities(activities: List<Activity>): List<Long>
+
+    @Insert
+    fun insertPersonalActivities(personalActivities: List<PersonalActivity>): List<Long>
+
+    @Insert
+    fun insertReminderSchedules(reminderSchedules: List<ReminderSchedule>): List<Long>
+
+    @Insert
+    fun insertReminders(reminders: List<Reminder>): List<Long>
+
+    @Insert
+    fun insertCheckedActivities(checkedActivities: List<CheckedActivity>): List<Long>
+
+    @Query("DELETE FROM checkedActivities")
+    fun deleteAllCheckedActivities()
+
+    @Query("DELETE FROM reminders")
+    fun deleteAllReminders()
+
+    @Query("DELETE FROM reminderSchedules")
+    fun deleteAllReminderSchedules()
+
+    @Query("DELETE FROM personalActivities")
+    fun deleteAllPersonalActivities()
+
+    @Query("DELETE FROM activities")
+    fun deleteAllActivities()
+
+    @Query("DELETE FROM enrollments")
+    fun deleteAllEnrollments()
+
+    @Query("DELETE FROM courses")
+    fun deleteAllCourses()
+
+    @Query("DELETE FROM users")
+    fun deleteAllUsers()
+    @Query("SELECT * FROM reminderSchedules WHERE activityId = :activityId AND studentId = :studentId LIMIT 1")
+    fun getReminderSchedule(activityId: Int, studentId: Int): ReminderSchedule?
+
+    @Query("SELECT * FROM reminders WHERE reminderScheduleId IN (SELECT reminderScheduleId FROM reminderSchedules WHERE activityId = :activityId AND studentId = :studentId)")
+    fun getRemindersByActivityAndUser(activityId: Int, studentId: Int): List<Reminder>
+
+    @Query("""
+    SELECT activityType, COUNT(*) as activityCount
+    FROM activities
+    WHERE courseId = :courseId
+    GROUP BY activityType
+""")
+    suspend fun getActivityCountsByTypeForCourse(courseId: Int): List<ActivityCount>
+
+    @Query("""
+    SELECT strftime('%d', datetime(dueDate / 1000, 'unixepoch')) AS day,
+           COUNT(*) AS count
+    FROM activities
+    WHERE courseId = :courseId
+    GROUP BY strftime('%d', datetime(dueDate / 1000, 'unixepoch'))
+    ORDER BY strftime('%d', datetime(dueDate / 1000, 'unixepoch'))
+""")
+    suspend fun getActivityDeadlinesByDay(courseId: Int): List<ActivityDeadlineCount>
+
+    @Query("""
+        SELECT strftime('%d', datetime(dueDate / 1000, 'unixepoch')) AS day,
+               COUNT(*) AS count
+        FROM activities
+        WHERE courseId != :courseId
+        GROUP BY strftime('%d', datetime(dueDate / 1000, 'unixepoch'))
+        ORDER BY strftime('%d', datetime(dueDate / 1000, 'unixepoch'))
+    """)
+    suspend fun getAllActivityDeadlinesByDayExceptCourse(courseId: Int): List<ActivityDeadlineCount>
 }

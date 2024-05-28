@@ -11,7 +11,6 @@ import android.widget.Filterable
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import com.example.gradesaver.AddRemindersActivity
 import com.example.gradesaver.ManageRemindersActivity
 import com.example.gradesaver.R
@@ -70,45 +69,123 @@ class StudentCoursesExpandableListAdapter(
         return view
     }
 
-    override fun getChildView(groupPosition: Int, childPosition: Int, isLastChild: Boolean, convertView: View?, parent: ViewGroup?): View {
+//    override fun getChildView(groupPosition: Int, childPosition: Int, isLastChild: Boolean, convertView: View?, parent: ViewGroup?): View {
+////        val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.student_child_item, parent, false)
+////        val activity = getChild(groupPosition, childPosition)
+////        val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+////        val currentDate = Date()
+////        view.findViewById<TextView>(R.id.activityName).text = activity.activityName
+////        view.findViewById<TextView>(R.id.activityDueDate).text = dateFormat.format(activity.dueDate)
+////
+////        val imageView = view.findViewById<ImageView>(R.id.addReminders)
+////
+////        val info = view.findViewById<ImageView>(R.id.ivInfo);
+////        info.setOnClickListener {
+////            val intent = Intent(context, ManageRemindersActivity::class.java).apply {
+////                putExtra("USER_DETAILS", user)  // Ensure user is serializable or pass user ID
+////                putExtra("ACTIVITY", activity)
+////            }
+////            context.startActivity(intent)
+////        }
+////
+////        coroutineScope.launch(Dispatchers.IO) {
+////            val hasReminders = AppDatabase.getInstance(context).appDao().getRemindersByActivity(activity.activityId).isNotEmpty()
+////            withContext(Dispatchers.Main) {
+////                if (activity.dueDate.after(currentDate) && !hasReminders) {
+////                    imageView.visibility = View.VISIBLE
+////                    imageView.setOnClickListener {
+////                        val intent = Intent(context, AddRemindersActivity::class.java).apply {
+////                            putExtra("USER_DETAILS", user)  // Ensure user is serializable or pass user ID
+////                            putExtra("ACTIVITY", activity)
+////                        }
+////                        context.startActivity(intent)
+////                    }
+////                } else {
+////                    imageView.visibility = View.INVISIBLE
+////                }
+////            }
+////        }
+////        return view
+////
+//
 //        val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.student_child_item, parent, false)
 //        val activity = getChild(groupPosition, childPosition)
+//        val course = getGroup(groupPosition)
+//
+//        // Format and set activity details
+//        val activityNameTextView = view.findViewById<TextView>(R.id.activityName)
+//        activityNameTextView.text = activity.activityName
+//
+//        val activityDueDateTextView = view.findViewById<TextView>(R.id.activityDueDate)
 //        val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
-//        val currentDate = Date()
-//        view.findViewById<TextView>(R.id.activityName).text = activity.activityName
-//        view.findViewById<TextView>(R.id.activityDueDate).text = dateFormat.format(activity.dueDate)
+//        activityDueDateTextView.text = dateFormat.format(activity.dueDate)
 //
-//        val imageView = view.findViewById<ImageView>(R.id.addReminders)
-//
-//        val info = view.findViewById<ImageView>(R.id.ivInfo);
-//        info.setOnClickListener {
-//            val intent = Intent(context, ManageRemindersActivity::class.java).apply {
-//                putExtra("USER_DETAILS", user)  // Ensure user is serializable or pass user ID
-//                putExtra("ACTIVITY", activity)
-//            }
-//            context.startActivity(intent)
-//        }
+//        val addRemindersImageView = view.findViewById<ImageView>(R.id.addReminders)
+//        val infoImageView = view.findViewById<ImageView>(R.id.ivInfo)
 //
 //        coroutineScope.launch(Dispatchers.IO) {
 //            val hasReminders = AppDatabase.getInstance(context).appDao().getRemindersByActivity(activity.activityId).isNotEmpty()
 //            withContext(Dispatchers.Main) {
-//                if (activity.dueDate.after(currentDate) && !hasReminders) {
-//                    imageView.visibility = View.VISIBLE
-//                    imageView.setOnClickListener {
+//                if (activity.dueDate.after(Date()) && !hasReminders) {
+//                    addRemindersImageView.visibility = View.VISIBLE
+//                    addRemindersImageView.setOnClickListener {
 //                        val intent = Intent(context, AddRemindersActivity::class.java).apply {
-//                            putExtra("USER_DETAILS", user)  // Ensure user is serializable or pass user ID
+//                            putExtra("USER_DETAILS", user)
 //                            putExtra("ACTIVITY", activity)
 //                        }
 //                        context.startActivity(intent)
 //                    }
 //                } else {
-//                    imageView.visibility = View.INVISIBLE
+//                    addRemindersImageView.visibility = View.INVISIBLE
+//                }
+//
+//                if (hasReminders) {
+//                    infoImageView.visibility = View.VISIBLE
+//                    infoImageView.setOnClickListener {
+//                        val intent = Intent(context, ManageRemindersActivity::class.java).apply {
+//                            putExtra("USER_DETAILS", user)
+//                            putExtra("ACTIVITY", activity)
+//                        }
+//                        context.startActivity(intent)
+//                    }
+//                } else {
+//                    infoImageView.visibility = View.INVISIBLE
 //                }
 //            }
 //        }
-//        return view
 //
+//        // Implementing double click for detailed alert
+//        view.setOnClickListener {
+//            val clickTime = System.currentTimeMillis()
+//            if (clickTime - lastClickTime < DOUBLE_CLICK_TIME_DELTA) {
+//                // Double click detected
+//                showProfessorInfoDialog(course, activity)
+//            }
+//            lastClickTime = clickTime
+//        }
+//
+//        return view
+//    }
+//
+//    private var lastClickTime: Long = 0
+//    private val DOUBLE_CLICK_TIME_DELTA: Long = 300 // milliseconds
+//
+//    private fun showProfessorInfoDialog(course: Course, activity: Activity) {
+//        coroutineScope.launch {
+//            val professor = AppDatabase.getInstance(context).appDao().getUserById(course.professorId)
+//            withContext(Dispatchers.Main) {
+//                val message = "Professor's Email: ${professor.email}\nDeadline: ${SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(activity.dueDate)}"
+//                AlertDialog.Builder(context)
+//                    .setTitle(activity.activityName)
+//                    .setMessage(message)
+//                    .setPositiveButton("OK") { dialog, which -> dialog.dismiss() }
+//                    .show()
+//            }
+//        }
+//    }
 
+
+    override fun getChildView(groupPosition: Int, childPosition: Int, isLastChild: Boolean, convertView: View?, parent: ViewGroup?): View {
         val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.student_child_item, parent, false)
         val activity = getChild(groupPosition, childPosition)
         val course = getGroup(groupPosition)
@@ -125,7 +202,8 @@ class StudentCoursesExpandableListAdapter(
         val infoImageView = view.findViewById<ImageView>(R.id.ivInfo)
 
         coroutineScope.launch(Dispatchers.IO) {
-            val hasReminders = AppDatabase.getInstance(context).appDao().getRemindersByActivity(activity.activityId).isNotEmpty()
+            // Check for existing reminders specific to this user and activity
+            val hasReminders = AppDatabase.getInstance(context).appDao().getRemindersByActivityAndUser(activity.activityId, user.userId).isNotEmpty()
             withContext(Dispatchers.Main) {
                 if (activity.dueDate.after(Date()) && !hasReminders) {
                     addRemindersImageView.visibility = View.VISIBLE
@@ -155,37 +233,8 @@ class StudentCoursesExpandableListAdapter(
             }
         }
 
-        // Implementing double click for detailed alert
-        view.setOnClickListener {
-            val clickTime = System.currentTimeMillis()
-            if (clickTime - lastClickTime < DOUBLE_CLICK_TIME_DELTA) {
-                // Double click detected
-                showProfessorInfoDialog(course, activity)
-            }
-            lastClickTime = clickTime
-        }
-
         return view
     }
-
-    private var lastClickTime: Long = 0
-    private val DOUBLE_CLICK_TIME_DELTA: Long = 300 // milliseconds
-
-    private fun showProfessorInfoDialog(course: Course, activity: Activity) {
-        coroutineScope.launch {
-            val professor = AppDatabase.getInstance(context).appDao().getUserById(course.professorId)
-            withContext(Dispatchers.Main) {
-                val message = "Professor's Email: ${professor.email}\nDeadline: ${SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(activity.dueDate)}"
-                AlertDialog.Builder(context)
-                    .setTitle(activity.activityName)
-                    .setMessage(message)
-                    .setPositiveButton("OK") { dialog, which -> dialog.dismiss() }
-                    .show()
-            }
-        }
-    }
-
-
 
 
     fun updateData(newCourses: MutableList<Course>, newDetails: MutableMap<Course, List<Activity>>) {
