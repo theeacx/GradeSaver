@@ -11,4 +11,5 @@
     <color name="colorPresentation">#3F51B5</color>
     <color name="colorProject">#9C27B0</color>
     <color name="defaultActivityColor">#BF3262</color>
+    <color name="teal">#008080</color>
 </resources>
