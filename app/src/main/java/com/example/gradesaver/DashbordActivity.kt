@@ -1,6 +1,7 @@
 package com.example.gradesaver
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.viewpager2.widget.ViewPager2
 import com.example.gradesaver.adapters.ChartPagerAdapter
@@ -35,7 +36,7 @@ class DashboardActivity : AppCompatActivity() {
             if (currentItem > 0) {
                 viewPager.setCurrentItem(currentItem - 1, true)
             } else {
-                viewPager.setCurrentItem(viewPager.adapter?.itemCount ?: 0 - 1, false)
+                Toast.makeText(this, "You cannot go back from here", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -45,10 +46,9 @@ class DashboardActivity : AppCompatActivity() {
             if (currentItem < itemCount - 1) {
                 viewPager.setCurrentItem(currentItem + 1, true)
             } else {
-                viewPager.setCurrentItem(0, false)
+                Toast.makeText(this, "You reached the end of the dashboard", Toast.LENGTH_SHORT).show()
             }
         }
-
     }
 
     private fun setupViewPager(userId: Int) {
