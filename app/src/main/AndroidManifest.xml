@@ -19,6 +19,9 @@
         android:theme="@style/Theme.GradeSaver"
         tools:targetApi="31">
         <activity
+            android:name=".StudentActivityListActivity"
+            android:exported="false" />
+        <activity
             android:name=".StudentCalendarActivity"
             android:exported="false" />
         <activity

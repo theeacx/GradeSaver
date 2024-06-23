@@ -24,10 +24,6 @@
             android:layout_height="match_parent"
             android:background="@drawable/custom_edittext">
 
-            <!-- First Row of FloatingActionButtons -->
-
-            <!-- Second Row of FloatingActionButtons -->
-
             <TextView
                 android:id="@+id/welcomeText"
                 android:layout_width="0dp"
@@ -52,7 +48,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="40dp"
-                android:layout_marginTop="125dp"
+                android:layout_marginTop="100dp"
                 android:src="@drawable/baseline_person_2_24"
                 app:backgroundTint="@color/purple"
                 app:fabCustomSize="96dp"
@@ -66,7 +62,7 @@
                 android:id="@+id/fabTwo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="125dp"
+                android:layout_marginTop="100dp"
                 android:layout_marginEnd="40dp"
                 android:src="@android:drawable/ic_input_add"
                 app:backgroundTint="@color/purple"
@@ -82,12 +78,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="40dp"
-                android:layout_marginBottom="96dp"
+                android:layout_marginTop="16dp"
                 android:src="@drawable/baseline_calendar_24"
                 app:backgroundTint="@color/purple"
                 app:fabCustomSize="96dp"
-                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/fabOne"
                 app:maxImageSize="60dp"
                 app:tint="@color/white"
                 tools:ignore="SpeakableTextPresentCheck" />
@@ -97,29 +93,45 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="40dp"
-                android:layout_marginBottom="96dp"
+                android:layout_marginTop="16dp"
                 android:src="@drawable/baseline_dashbord_24"
                 app:backgroundTint="@color/purple"
                 app:fabCustomSize="96dp"
-                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/fabTwo"
                 app:maxImageSize="60dp"
                 app:tint="@color/white"
                 tools:ignore="SpeakableTextPresentCheck" />
 
-            <Button
-                android:id="@+id/buttonCSIEgpt"
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/fabChat"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="40dp"
                 android:layout_marginTop="16dp"
-                android:text="CSIE gpt"
-                android:textColor="@color/white"
-                android:backgroundTint="@color/purple"
-                app:cornerRadius="8dp"
-                app:layout_constraintTop_toBottomOf="@id/fabFour"
-                app:layout_constraintBottom_toBottomOf="parent"
+                android:src="@drawable/chat_icon"
+                app:backgroundTint="@color/purple"
+                app:fabCustomSize="96dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/fabThree"
+                app:maxImageSize="60dp"
+                app:tint="@color/white"
+                tools:ignore="SpeakableTextPresentCheck" />
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/fabList"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="40dp"
+                android:layout_marginTop="16dp"
+                android:src="@drawable/list_icon"
+                app:backgroundTint="@color/purple"
+                app:fabCustomSize="96dp"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
+                app:layout_constraintTop_toBottomOf="@id/fabFour"
+                app:maxImageSize="60dp"
+                app:tint="@color/white"
+                tools:ignore="SpeakableTextPresentCheck" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.cardview.widget.CardView>

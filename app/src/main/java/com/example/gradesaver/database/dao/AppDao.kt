@@ -463,4 +463,8 @@ interface AppDao {
         ORDER BY strftime('%d', datetime(dueDate / 1000, 'unixepoch'))
     """)
     suspend fun getAllActivityDeadlinesByDayExceptCourse(courseId: Int): List<ActivityDeadlineCount>
+
+    @Query("SELECT a.*, c.courseName FROM activities a JOIN courses c ON a.courseId = c.courseId WHERE a.dueDate > :currentDate")
+    suspend fun getUpcomingActivities(currentDate: Date): List<ActivityWithCourse>
+
 }

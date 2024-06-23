@@ -2,7 +2,6 @@ package com.example.gradesaver
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import com.example.gradesaver.database.entities.User
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -46,9 +45,17 @@ class StudentMainScreenActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        val buttonChat : Button = findViewById(R.id.buttonCSIEgpt)
-        buttonChat.setOnClickListener {
+        val fabChat : FloatingActionButton = findViewById(R.id.fabChat)
+        fabChat.setOnClickListener {
             val intent = Intent(this, CsieGptActivity::class.java).apply {
+                putExtra("USER_DETAILS", user)
+            }
+            startActivity(intent)
+        }
+
+        val fabList : FloatingActionButton = findViewById(R.id.fabList)
+        fabList.setOnClickListener {
+            val intent = Intent(this, StudentActivityListActivity::class.java).apply {
                 putExtra("USER_DETAILS", user)
             }
             startActivity(intent)
