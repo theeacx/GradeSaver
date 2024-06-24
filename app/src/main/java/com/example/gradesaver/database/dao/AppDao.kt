@@ -467,4 +467,13 @@ interface AppDao {
     @Query("SELECT a.*, c.courseName FROM activities a JOIN courses c ON a.courseId = c.courseId WHERE a.dueDate > :currentDate")
     suspend fun getUpcomingActivities(currentDate: Date): List<ActivityWithCourse>
 
+    @Query("SELECT * FROM activities WHERE courseId IN (SELECT courseId FROM enrollments WHERE studentId = :userId)")
+    suspend fun getAllActivitiesByUser(userId: Int): List<Activity>
+
+    @Query("SELECT * FROM personalActivities WHERE userId = :userId")
+    suspend fun getAllPersonalActivitiesByUser(userId: Int): List<PersonalActivity>
+
+    @Query("SELECT reminders.* FROM reminders INNER JOIN reminderSchedules ON reminders.reminderScheduleId = reminderSchedules.reminderScheduleId WHERE reminderSchedules.studentId = :userId")
+    suspend fun getAllRemindersByUser(userId: Int): List<Reminder>
+
 }

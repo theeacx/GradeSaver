@@ -24,6 +24,7 @@ import com.example.gradesaver.database.entities.CheckedActivity
 import com.example.gradesaver.database.entities.PersonalActivity
 import com.example.gradesaver.database.entities.Reminder
 import com.example.gradesaver.database.entities.User
+import com.example.gradesaver.decorators.ActivityDecorator
 import com.jakewharton.threetenabp.AndroidThreeTen
 import com.prolificinteractive.materialcalendarview.CalendarDay
 import com.prolificinteractive.materialcalendarview.MaterialCalendarView
@@ -32,6 +33,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.threeten.bp.LocalDate
 import org.threeten.bp.ZoneId
+import org.threeten.bp.ZonedDateTime
 import org.threeten.bp.format.DateTimeFormatter
 import java.text.ParseException
 import java.util.Calendar
@@ -74,6 +76,7 @@ class StudentCalendarActivity : AppCompatActivity() {
         }
 
         loadActivitiesForDate(today)
+        loadAllActivities()
 
         addPersonalActivityButton.setOnClickListener {
             val selectedDate = calendarView.selectedDate?.date ?: today
@@ -81,6 +84,72 @@ class StudentCalendarActivity : AppCompatActivity() {
             intent.putExtra("USER_ID", user?.userId)
             intent.putExtra("SELECTED_DATE", selectedDate.toString())
             startActivity(intent)
+        }
+    }
+
+    private fun loadAllActivities() {
+        user?.let { user ->
+            lifecycleScope.launch {
+                val allActivities = dao.getAllActivitiesByUser(user.userId)
+                val allPersonalActivities = dao.getAllPersonalActivitiesByUser(user.userId)
+                val allReminders = dao.getAllRemindersByUser(user.userId)
+                val universityDates = mutableSetOf<CalendarDay>()
+                val personalDates = mutableSetOf<CalendarDay>()
+                val bothDates = mutableSetOf<CalendarDay>()
+
+                val activityDates = allActivities.map {
+                    CalendarDay.from(
+                        ZonedDateTime.ofInstant(
+                            org.threeten.bp.Instant.ofEpochMilli(it.dueDate.time),
+                            ZoneId.systemDefault()
+                        ).toLocalDate()
+                    )
+                }.toSet()
+
+                val personalActivityDates = allPersonalActivities.map {
+                    CalendarDay.from(
+                        ZonedDateTime.ofInstant(
+                            org.threeten.bp.Instant.ofEpochMilli(it.dueDate.time),
+                            ZoneId.systemDefault()
+                        ).toLocalDate()
+                    )
+                }.toSet()
+
+                val reminderDates = allReminders.map {
+                    CalendarDay.from(
+                        ZonedDateTime.ofInstant(
+                            org.threeten.bp.Instant.ofEpochMilli(it.reminderDate.time),
+                            ZoneId.systemDefault()
+                        ).toLocalDate()
+                    )
+                }.toSet()
+
+                activityDates.forEach { date ->
+                    if (personalActivityDates.contains(date) || reminderDates.contains(date)) {
+                        bothDates.add(date)
+                    } else {
+                        universityDates.add(date)
+                    }
+                }
+
+                personalActivityDates.forEach { date ->
+                    if (!activityDates.contains(date) && !reminderDates.contains(date)) {
+                        personalDates.add(date)
+                    }
+                }
+
+                reminderDates.forEach { date ->
+                    if (!activityDates.contains(date) && !personalActivityDates.contains(date)) {
+                        universityDates.add(date)
+                    } else {
+                        bothDates.add(date)
+                    }
+                }
+
+                withContext(Dispatchers.Main) {
+                    updateCalendarDecorators(universityDates, personalDates, bothDates)
+                }
+            }
         }
     }
 
@@ -382,5 +451,30 @@ class StudentCalendarActivity : AppCompatActivity() {
             "Project" -> R.color.colorProject
             else -> R.color.defaultActivityColor
         }
+    }
+
+    private fun updateCalendarDecorators(universityDates: Set<CalendarDay>, personalDates: Set<CalendarDay>, bothDates: Set<CalendarDay>) {
+        // Clear previous decorators
+        calendarView.removeDecorators()
+
+        // Add decorators
+        if (universityDates.isNotEmpty()) {
+            val universityColor = ContextCompat.getColor(this, R.color.teal)
+            Log.d("stud calendar", "Adding university decorator with color: $universityColor")
+            calendarView.addDecorator(ActivityDecorator(universityColor, universityDates))
+        }
+        if (personalDates.isNotEmpty()) {
+            val personalColor = ContextCompat.getColor(this, R.color.defaultActivityColor)
+            Log.d("stud calendar", "Adding personal decorator with color: $personalColor")
+            calendarView.addDecorator(ActivityDecorator(personalColor, personalDates))
+        }
+        if (bothDates.isNotEmpty()) {
+            val bothColor = ContextCompat.getColor(this, R.color.colorMidterm)
+            Log.d("stud calendar", "Adding both decorator with color: $bothColor")
+            calendarView.addDecorator(ActivityDecorator(bothColor, bothDates))
+        }
+
+        // Refresh the calendar view
+        calendarView.invalidateDecorators()
     }
 }
