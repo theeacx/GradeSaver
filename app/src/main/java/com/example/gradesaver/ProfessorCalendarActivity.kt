@@ -398,7 +398,7 @@ class ProfessorCalendarActivity : AppCompatActivity() {
             calendarView.addDecorator(ActivityDecorator(personalColor, personalDates))
         }
         if (bothDates.isNotEmpty()) {
-            val bothColor = ContextCompat.getColor(this, R.color.colorMidterm)
+            val bothColor = ContextCompat.getColor(this, R.color.both)
             Log.d(TAG, "Adding both decorator with color: $bothColor")
             calendarView.addDecorator(ActivityDecorator(bothColor, bothDates))
         }

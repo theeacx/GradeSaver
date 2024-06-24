@@ -7,6 +7,8 @@ import androidx.lifecycle.lifecycleScope
 import com.example.gradesaver.adapters.ActivityListAdapter
 import com.example.gradesaver.database.AppDatabase
 import com.example.gradesaver.database.dao.AppDao
+import com.example.gradesaver.database.entities.Activity
+import com.example.gradesaver.database.entities.Course
 import kotlinx.coroutines.launch
 import java.util.Date
 
@@ -27,9 +29,19 @@ class StudentActivityListActivity : AppCompatActivity() {
     private fun loadActivities() {
         lifecycleScope.launch {
             val currentDate = Date()
-            val activities = dao.getUpcomingActivities(currentDate)
-            val adapter = ActivityListAdapter(this@StudentActivityListActivity, activities)
+            val activitiesWithCourses = dao.getUpcomingActivities(currentDate)
+            val activitiesWithProfessorEmail = activitiesWithCourses.map { activityWithCourse ->
+                val professor = dao.getUserById(activityWithCourse.course.professorId)
+                ActivityWithProfessorEmail(activityWithCourse.activity, activityWithCourse.course, professor?.email ?: "No email")
+            }
+            val adapter = ActivityListAdapter(this@StudentActivityListActivity, activitiesWithProfessorEmail)
             listView.adapter = adapter
         }
     }
 }
+
+data class ActivityWithProfessorEmail(
+    val activity: Activity,
+    val course: Course,
+    val professorEmail: String
+)

@@ -7,21 +7,21 @@ import android.view.ViewGroup
 import android.widget.BaseAdapter
 import android.widget.TextView
 import com.example.gradesaver.R
-import com.example.gradesaver.dataClasses.ActivityWithCourse
+import com.example.gradesaver.ActivityWithProfessorEmail
 import java.text.SimpleDateFormat
-import java.util.Locale
+import java.util.*
 
-class ActivityListAdapter(private val context: Context, private val dataSource: List<ActivityWithCourse>) : BaseAdapter() {
-
-    private val inflater: LayoutInflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-    private val dateFormat = SimpleDateFormat("dd-MM-yyyy HH:mm", Locale.getDefault())
+class ActivityListAdapter(
+    private val context: Context,
+    private val activities: List<ActivityWithProfessorEmail>
+) : BaseAdapter() {
 
     override fun getCount(): Int {
-        return dataSource.size
+        return activities.size
     }
 
     override fun getItem(position: Int): Any {
-        return dataSource[position]
+        return activities[position]
     }
 
     override fun getItemId(position: Int): Long {
@@ -29,18 +29,33 @@ class ActivityListAdapter(private val context: Context, private val dataSource: 
     }
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
-        val rowView = inflater.inflate(R.layout.activity_list_item, parent, false)
+        val view: View
+        val viewHolder: ViewHolder
 
-        val activityNameTextView = rowView.findViewById<TextView>(R.id.activityName)
-        val activityDeadlineTextView = rowView.findViewById<TextView>(R.id.activityDeadline)
-        val courseNameTextView = rowView.findViewById<TextView>(R.id.courseName)
+        if (convertView == null) {
+            view = LayoutInflater.from(context).inflate(R.layout.activity_list_item, parent, false)
+            viewHolder = ViewHolder(view)
+            view.tag = viewHolder
+        } else {
+            view = convertView
+            viewHolder = view.tag as ViewHolder
+        }
 
-        val activityWithCourse = getItem(position) as ActivityWithCourse
+        val activityWithProfessorEmail = activities[position]
+        viewHolder.activityName.text = "Activity: ${activityWithProfessorEmail.activity.activityName}"
+        viewHolder.courseName.text = "Course: ${activityWithProfessorEmail.course.courseName}"
 
-        activityNameTextView.text = "Name: ${activityWithCourse.activity.activityName}"
-        activityDeadlineTextView.text = "Deadline: ${dateFormat.format(activityWithCourse.activity.dueDate)}"
-        courseNameTextView.text = "Course name: ${activityWithCourse.courseName}"
+        val formatter = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+        viewHolder.activityDeadline.text = "Deadline: ${formatter.format(activityWithProfessorEmail.activity.dueDate)}"
+        viewHolder.professorEmail.text = "Professor Email: ${activityWithProfessorEmail.professorEmail}"
 
-        return rowView
+        return view
+    }
+
+    private class ViewHolder(view: View) {
+        val activityName: TextView = view.findViewById(R.id.activityName)
+        val activityDeadline: TextView = view.findViewById(R.id.activityDeadline)
+        val courseName: TextView = view.findViewById(R.id.courseName)
+        val professorEmail: TextView = view.findViewById(R.id.professorEmail)
     }
 }
