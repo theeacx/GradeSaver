@@ -42,18 +42,43 @@
                 app:mcv_showOtherDates="all"
                 app:mcv_selectionColor="#8692F7"/>
 
-            <Button
-                android:id="@+id/addPersonalActivityButton"
-                android:layout_width="wrap_content"
+            <!-- Container for buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
                 android:layout_marginTop="10dp"
-                android:background="@color/purple"
-                android:padding="10dp"
-                android:text="Add Personal Activity"
-                android:textColor="@color/white"
-                android:textSize="18sp"
-                tools:ignore="TextContrastCheck"
-                android:layout_gravity="center" />
+                android:weightSum="2">
+
+                <Button
+                    android:id="@+id/addPersonalActivityButton"
+                    android:layout_width="0dp"
+                    android:layout_height="60dp"
+                    android:layout_weight="1"
+                    android:background="@color/purple"
+                    android:padding="10dp"
+                    android:text="Add Personal Activity"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
+                    tools:ignore="TextContrastCheck" />
+
+                <Space
+                    android:layout_width="8dp"
+                    android:layout_height="wrap_content" />
+
+                <Button
+                    android:id="@+id/showLegendButton"
+                    android:layout_width="0dp"
+                    android:layout_height="60dp"
+                    android:layout_weight="1"
+                    android:background="@color/purple"
+                    android:padding="10dp"
+                    android:text="Show Legend"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    tools:ignore="TextContrastCheck" />
+            </LinearLayout>
 
             <TextView
                 android:layout_width="match_parent"

@@ -63,6 +63,7 @@ class ProfessorCalendarActivity : AppCompatActivity() {
 
         calendarView = findViewById(R.id.calendarView)
         val addPersonalActivityButton = findViewById<Button>(R.id.addPersonalActivityButton)
+        val showLegendButton = findViewById<Button>(R.id.showLegendButton)
 
         val today = LocalDate.now()
         val calendarDay = CalendarDay.from(today)
@@ -85,6 +86,61 @@ class ProfessorCalendarActivity : AppCompatActivity() {
             intent.putExtra("USER_ID", user?.userId)
             startActivity(intent)
         }
+
+        showLegendButton.setOnClickListener {
+            showLegendDialog()
+        }
+    }
+
+    private fun showLegendDialog() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Activity Legend")
+
+        val legendLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(16, 16, 16, 16)
+        }
+
+        val legendItems = listOf(
+            Pair("Teal", "University Activities"),
+            Pair("Default", "Personal Activities"),
+            Pair("Midterm", "Both University and Personal Activities")
+        )
+
+        legendItems.forEach { (colorName, description) ->
+            val color = when (colorName) {
+                "Teal" -> ContextCompat.getColor(this, R.color.teal)
+                "Default" -> ContextCompat.getColor(this, R.color.defaultActivityColor)
+                "Midterm" -> ContextCompat.getColor(this, R.color.both)
+                else -> Color.TRANSPARENT
+            }
+
+            val itemLayout = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                setPadding(8, 8, 8, 8)
+            }
+
+            val colorView = View(this).apply {
+                setBackgroundColor(color)
+                layoutParams = LinearLayout.LayoutParams(50, 50).apply {
+                    setMargins(0, 0, 16, 0)
+                }
+            }
+
+            val descriptionView = TextView(this).apply {
+                text = description
+                textSize = 16f
+                setTextColor(Color.BLACK)
+            }
+
+            itemLayout.addView(colorView)
+            itemLayout.addView(descriptionView)
+            legendLayout.addView(itemLayout)
+        }
+
+        builder.setView(legendLayout)
+        builder.setPositiveButton("OK", null)
+        builder.show()
     }
 
     private fun loadAllActivities() {
@@ -132,7 +188,6 @@ class ProfessorCalendarActivity : AppCompatActivity() {
             }
         }
     }
-
 
     private fun loadActivitiesForDate(date: LocalDate) {
         Log.d(TAG, "Loading activities for date: $date")
@@ -381,7 +436,6 @@ class ProfessorCalendarActivity : AppCompatActivity() {
         }
     }
 
-
     private fun updateCalendarDecorators(universityDates: Set<CalendarDay>, personalDates: Set<CalendarDay>, bothDates: Set<CalendarDay>) {
         // Clear previous decorators
         calendarView.removeDecorators()
@@ -406,5 +460,4 @@ class ProfessorCalendarActivity : AppCompatActivity() {
         // Refresh the calendar view
         calendarView.invalidateDecorators()
     }
-
 }
