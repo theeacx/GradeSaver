@@ -25,6 +25,7 @@ import com.example.gradesaver.database.entities.PersonalActivity
 import com.example.gradesaver.database.entities.Reminder
 import com.example.gradesaver.database.entities.User
 import com.example.gradesaver.decorators.ActivityDecorator
+import com.example.gradesaver.decorators.BoldDecorator
 import com.jakewharton.threetenabp.AndroidThreeTen
 import com.prolificinteractive.materialcalendarview.CalendarDay
 import com.prolificinteractive.materialcalendarview.MaterialCalendarView
@@ -109,25 +110,25 @@ class StudentCalendarActivity : AppCompatActivity() {
 
         legendItems.forEach { (colorName, description) ->
             val color = when (colorName) {
-                "Teal" -> ContextCompat.getColor(this, R.color.teal)
-                "Default" -> ContextCompat.getColor(this, R.color.defaultActivityColor)
-                "Midterm" -> ContextCompat.getColor(this, R.color.both)
+                "Teal" -> ContextCompat.getColor(this@StudentCalendarActivity, R.color.teal)
+                "Default" -> ContextCompat.getColor(this@StudentCalendarActivity, R.color.defaultActivityColor)
+                "Midterm" -> ContextCompat.getColor(this@StudentCalendarActivity, R.color.both)
                 else -> Color.TRANSPARENT
             }
 
-            val itemLayout = LinearLayout(this).apply {
+            val itemLayout = LinearLayout(this@StudentCalendarActivity).apply {
                 orientation = LinearLayout.HORIZONTAL
                 setPadding(8, 8, 8, 8)
             }
 
-            val colorView = View(this).apply {
+            val colorView = View(this@StudentCalendarActivity).apply {
                 setBackgroundColor(color)
                 layoutParams = LinearLayout.LayoutParams(50, 50).apply {
                     setMargins(0, 0, 16, 0)
                 }
             }
 
-            val descriptionView = TextView(this).apply {
+            val descriptionView = TextView(this@StudentCalendarActivity).apply {
                 text = description
                 textSize = 16f
                 setTextColor(Color.BLACK)
@@ -149,6 +150,12 @@ class StudentCalendarActivity : AppCompatActivity() {
                 val allActivities = dao.getAllActivitiesByUser(user.userId)
                 val allPersonalActivities = dao.getAllPersonalActivitiesByUser(user.userId)
                 val allReminders = dao.getAllRemindersByUser(user.userId)
+
+                // Log raw data fetched
+                Log.d("StudentCalendarActivity", "All University Activities: ${allActivities.map { it.dueDate }}")
+                Log.d("StudentCalendarActivity", "All Personal Activities: ${allPersonalActivities.map { it.dueDate }}")
+                Log.d("StudentCalendarActivity", "All Reminders: ${allReminders.map { it.reminderDate }}")
+
                 val universityDates = mutableSetOf<CalendarDay>()
                 val personalDates = mutableSetOf<CalendarDay>()
                 val bothDates = mutableSetOf<CalendarDay>()
@@ -180,8 +187,12 @@ class StudentCalendarActivity : AppCompatActivity() {
                     )
                 }.toSet()
 
-                activityDates.forEach { date ->
-                    if (personalActivityDates.contains(date) || reminderDates.contains(date)) {
+                // Incorporate reminders into university activities
+                val allUniversityDates = activityDates + reminderDates
+
+                // Identify dates with both activities
+                allUniversityDates.forEach { date ->
+                    if (personalActivityDates.contains(date)) {
                         bothDates.add(date)
                     } else {
                         universityDates.add(date)
@@ -189,18 +200,13 @@ class StudentCalendarActivity : AppCompatActivity() {
                 }
 
                 personalActivityDates.forEach { date ->
-                    if (!activityDates.contains(date) && !reminderDates.contains(date)) {
+                    if (!allUniversityDates.contains(date)) {
                         personalDates.add(date)
                     }
                 }
 
-                reminderDates.forEach { date ->
-                    if (!activityDates.contains(date) && !personalActivityDates.contains(date)) {
-                        universityDates.add(date)
-                    } else {
-                        bothDates.add(date)
-                    }
-                }
+                // Log the dates for May 2024
+                logDatesForMonth(activityDates, personalActivityDates, bothDates, universityDates, personalDates, 2024, 5)
 
                 withContext(Dispatchers.Main) {
                     updateCalendarDecorators(universityDates, personalDates, bothDates)
@@ -208,6 +214,36 @@ class StudentCalendarActivity : AppCompatActivity() {
             }
         }
     }
+
+    private fun logDatesForMonth(
+        activityDates: Set<CalendarDay>,
+        personalActivityDates: Set<CalendarDay>,
+        bothDates: Set<CalendarDay>,
+        universityDates: Set<CalendarDay>,
+        personalDates: Set<CalendarDay>,
+        year: Int,
+        month: Int
+    ) {
+        Log.d("StudentCalendarActivity", "Logging dates for May $year")
+
+        Log.d("StudentCalendarActivity", "University Activities:")
+        universityDates.filter { it.date.year == year && it.date.monthValue == month }.forEach {
+            Log.d("StudentCalendarActivity", it.date.toString())
+        }
+
+        Log.d("StudentCalendarActivity", "Personal Activities:")
+        personalDates.filter { it.date.year == year && it.date.monthValue == month }.forEach {
+            Log.d("StudentCalendarActivity", it.date.toString())
+        }
+
+        Log.d("StudentCalendarActivity", "Both Activities:")
+        bothDates.filter { it.date.year == year && it.date.monthValue == month }.forEach {
+            Log.d("StudentCalendarActivity", it.date.toString())
+        }
+    }
+
+
+
 
     private fun loadActivitiesForDate(date: LocalDate) {
         val startOfDay = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
@@ -513,7 +549,18 @@ class StudentCalendarActivity : AppCompatActivity() {
         // Clear previous decorators
         calendarView.removeDecorators()
 
-        // Add decorators
+        val textSize = resources.getDimension(R.dimen.calendar_day_text_size)
+        val isBold = true
+
+        // Add bold decorator for all days
+        calendarView.addDecorator(BoldDecorator(textSize, isBold))
+
+        // Add decorators for specific dates
+        if (bothDates.isNotEmpty()) {
+            val bothColor = ContextCompat.getColor(this, R.color.both)
+            Log.d("stud calendar", "Adding both decorator with color: $bothColor")
+            calendarView.addDecorator(ActivityDecorator(bothColor, bothDates))
+        }
         if (universityDates.isNotEmpty()) {
             val universityColor = ContextCompat.getColor(this, R.color.teal)
             Log.d("stud calendar", "Adding university decorator with color: $universityColor")
@@ -523,11 +570,6 @@ class StudentCalendarActivity : AppCompatActivity() {
             val personalColor = ContextCompat.getColor(this, R.color.defaultActivityColor)
             Log.d("stud calendar", "Adding personal decorator with color: $personalColor")
             calendarView.addDecorator(ActivityDecorator(personalColor, personalDates))
-        }
-        if (bothDates.isNotEmpty()) {
-            val bothColor = ContextCompat.getColor(this, R.color.both)
-            Log.d("stud calendar", "Adding both decorator with color: $bothColor")
-            calendarView.addDecorator(ActivityDecorator(bothColor, bothDates))
         }
 
         // Refresh the calendar view

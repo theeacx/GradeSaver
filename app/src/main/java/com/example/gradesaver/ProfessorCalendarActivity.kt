@@ -23,6 +23,7 @@ import com.example.gradesaver.database.entities.CheckedActivity
 import com.example.gradesaver.database.entities.PersonalActivity
 import com.example.gradesaver.database.entities.User
 import com.example.gradesaver.decorators.ActivityDecorator
+import com.example.gradesaver.decorators.BoldDecorator
 import com.jakewharton.threetenabp.AndroidThreeTen
 import com.prolificinteractive.materialcalendarview.CalendarDay
 import com.prolificinteractive.materialcalendarview.MaterialCalendarView
@@ -440,7 +441,13 @@ class ProfessorCalendarActivity : AppCompatActivity() {
         // Clear previous decorators
         calendarView.removeDecorators()
 
-        // Add decorators
+        val textSize = resources.getDimension(R.dimen.calendar_day_text_size)
+        val isBold = true
+
+        // Add bold decorator for all days
+        calendarView.addDecorator(BoldDecorator(textSize, isBold))
+
+        // Add decorators for specific dates
         if (universityDates.isNotEmpty()) {
             val universityColor = ContextCompat.getColor(this, R.color.teal)
             Log.d(TAG, "Adding university decorator with color: $universityColor")
