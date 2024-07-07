@@ -24,16 +24,34 @@
             android:background="@drawable/custom_edittext"
             android:padding="16dp">
 
-            <!-- TextView for the Calendar title -->
-            <TextView
+            <!-- Container for the title and share icon -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Calendar"
-                android:id="@+id/calendarTitle"
-                android:textSize="36sp"
-                android:textAlignment="center"
-                android:textStyle="bold"
-                android:textColor="@color/purple"/>
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <!-- TextView for the Calendar title -->
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="Calendar"
+                    android:id="@+id/calendarTitle"
+                    android:textSize="36sp"
+                    android:textAlignment="center"
+                    android:textStyle="bold"
+                    android:textColor="@color/purple"
+                    android:layout_weight="1"/>
+
+                <!-- ImageView for the share icon -->
+                <ImageView
+                    android:id="@+id/shareIcon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginStart="8dp"
+                    android:src="@drawable/share"
+                    android:contentDescription="Share Icon"/>
+            </LinearLayout>
 
             <com.prolificinteractive.materialcalendarview.MaterialCalendarView
                 android:id="@+id/calendarView"
@@ -53,7 +71,7 @@
 
                 <Button
                     android:id="@+id/addPersonalActivityButton"
-                    android:layout_width="20dp"
+                    android:layout_width="0dp"
                     android:layout_height="60dp"
                     android:layout_weight="1"
                     android:background="@color/purple"
@@ -70,7 +88,7 @@
 
                 <Button
                     android:id="@+id/showLegendButton"
-                    android:layout_width="20dp"
+                    android:layout_width="0dp"
                     android:layout_height="60dp"
                     android:layout_weight="1"
                     android:background="@color/purple"

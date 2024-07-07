@@ -15,4 +15,5 @@
         <item>Monthly</item>
         <item>Custom</item>
     </string-array>
+    <string name="server_client_id">402144928890-919jqmh1e7oqhmntet29u9bkbpt9k70l.apps.googleusercontent.com</string>
 </resources>
