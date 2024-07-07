@@ -167,10 +167,7 @@ class ProfessorCalendarActivity : AppCompatActivity() {
         val account = GoogleSignIn.getLastSignedInAccount(this)
         if (account != null) {
             lifecycleScope.launch {
-                val allActivities = dao.getActivitiesForProfessorByDay(user!!.userId, Date(0), Date(Long.MAX_VALUE))
-                val allPersonalActivities = dao.getPersonalActivitiesByUser(user!!.userId)
                 val exportedActivities = dao.getAllExportedActivities()
-
                 val exportedActivityIds = exportedActivities.filter { it.activityType == "university" }.map { it.activityId }.toSet()
                 val exportedPersonalActivityIds = exportedActivities.filter { it.activityType == "personal" }.map { it.activityId }.toSet()
 
@@ -186,37 +183,53 @@ class ProfessorCalendarActivity : AppCompatActivity() {
                             credential
                         ).setApplicationName("GradeSaver").build()
 
-                        // Export all university activities
-                        for (activity in allActivities) {
-                            if (activity.activityId !in exportedActivityIds) {
-                                val startDateTime = toDateTime(activity.dueDate)
-                                val endDateTime = toDateTime(activity.dueDate) // Adjust this if your activities have specific end times
+                        val today = LocalDate.now()
+                        for (i in 0..4) {
+                            val date = today.plusDays(i.toLong())
+                            val startOfDay = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                            val endOfDay = date.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
-                                val event = Event()
-                                    .setSummary(activity.activityName)
-                                    .setDescription("University Activity")
-                                    .setStart(EventDateTime().setDateTime(startDateTime))
-                                    .setEnd(EventDateTime().setDateTime(endDateTime))
+                            Log.d("ExportToGoogleCalendar", "Processing date: $date")
 
-                                service.events().insert("primary", event).execute()
-                                dao.insertExportedActivity(ExportedActivity(0, activity.activityId, "university"))
+                            val activities = dao.getActivitiesForProfessorByDay(user!!.userId, Date(startOfDay), Date(endOfDay))
+                            val personalActivities = dao.getPersonalActivitiesByUser(user!!.userId)
+
+                            Log.d("ExportToGoogleCalendar", "Found ${activities.size} university activities and ${personalActivities.size} personal activities for date: $date")
+
+                            // Export all university activities
+                            for (activity in activities) {
+                                if (activity.activityId !in exportedActivityIds) {
+                                    val startDateTime = toDateTime(activity.dueDate)
+                                    val endDateTime = toDateTime(activity.dueDate) // Adjust this if your activities have specific end times
+
+                                    val event = Event()
+                                        .setSummary(activity.activityName)
+                                        .setDescription("University Activity")
+                                        .setStart(EventDateTime().setDateTime(startDateTime))
+                                        .setEnd(EventDateTime().setDateTime(endDateTime))
+
+                                    service.events().insert("primary", event).execute()
+                                    dao.insertExportedActivity(ExportedActivity(0, activity.activityId, "university"))
+                                    Log.d("ExportToGoogleCalendar", "Exported university activity: ${activity.activityName} for date: $date")
+                                }
                             }
-                        }
 
-                        // Export all personal activities
-                        for (personalActivity in allPersonalActivities) {
-                            if (personalActivity.personalActivityId !in exportedPersonalActivityIds) {
-                                val startDateTime = toDateTime(personalActivity.dueDate)
-                                val endDateTime = toDateTime(personalActivity.dueDate) // Adjust this if your activities have specific end times
+                            // Export all personal activities
+                            for (personalActivity in personalActivities) {
+                                if (personalActivity.personalActivityId !in exportedPersonalActivityIds) {
+                                    val startDateTime = toDateTime(personalActivity.dueDate)
+                                    val endDateTime = toDateTime(personalActivity.dueDate) // Adjust this if your activities have specific end times
 
-                                val event = Event()
-                                    .setSummary(personalActivity.activityName)
-                                    .setDescription("Personal Activity")
-                                    .setStart(EventDateTime().setDateTime(startDateTime))
-                                    .setEnd(EventDateTime().setDateTime(endDateTime))
+                                    val event = Event()
+                                        .setSummary(personalActivity.activityName)
+                                        .setDescription("Personal Activity")
+                                        .setStart(EventDateTime().setDateTime(startDateTime))
+                                        .setEnd(EventDateTime().setDateTime(endDateTime))
 
-                                service.events().insert("primary", event).execute()
-                                dao.insertExportedActivity(ExportedActivity(0, personalActivity.personalActivityId, "personal"))
+                                    service.events().insert("primary", event).execute()
+                                    dao.insertExportedActivity(ExportedActivity(0, personalActivity.personalActivityId, "personal"))
+                                    Log.d("ExportToGoogleCalendar", "Exported personal activity: ${personalActivity.activityName} for date: $date")
+                                }
                             }
                         }
 
