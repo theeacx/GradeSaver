@@ -5,6 +5,8 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.gradesaver.database.dao.AppDao
 import com.example.gradesaver.database.entities.*
 
@@ -18,9 +20,10 @@ import com.example.gradesaver.database.entities.*
         Reminder::class,
         UserActivity::class,
         PersonalActivity::class,
-        CheckedActivity::class
+        CheckedActivity::class,
+        ExportedActivity::class // Add the new entity here
     ],
-    version = 4,
+    version = 5, // Update the version number
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -32,20 +35,22 @@ abstract class AppDatabase : RoomDatabase() {
         private var INSTANCE: AppDatabase? = null
 
         fun getInstance(context: Context): AppDatabase {
-            // If the INSTANCE is not null, then return it,
-            // if it is, then create the database
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
                     "app_database"
                 )
-                    // Migration strategies can be added here for database version updates
-                    .fallbackToDestructiveMigration() // Use this to reset the database instead of migrating if no migration object is available
+                    .addMigrations(MIGRATION_4_5)
                     .build()
                 INSTANCE = instance
-                // return instance
                 instance
+            }
+        }
+
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("CREATE TABLE IF NOT EXISTS `exportedActivities` (`exportedActivityId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `activityId` INTEGER NOT NULL, `activityType` TEXT NOT NULL)")
             }
         }
     }

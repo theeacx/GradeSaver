@@ -476,4 +476,9 @@ interface AppDao {
     @Query("SELECT reminders.* FROM reminders INNER JOIN reminderSchedules ON reminders.reminderScheduleId = reminderSchedules.reminderScheduleId WHERE reminderSchedules.studentId = :userId")
     suspend fun getAllRemindersByUser(userId: Int): List<Reminder>
 
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertExportedActivity(exportedActivity: ExportedActivity)
+
+    @Query("SELECT * FROM exportedActivities")
+    suspend fun getAllExportedActivities(): List<ExportedActivity>
 }

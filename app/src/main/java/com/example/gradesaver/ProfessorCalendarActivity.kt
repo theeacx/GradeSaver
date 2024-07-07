@@ -1,5 +1,6 @@
 package com.example.gradesaver
 
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Color
@@ -8,7 +9,9 @@ import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.CheckBox
+import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -20,10 +23,22 @@ import com.example.gradesaver.database.AppDatabase
 import com.example.gradesaver.database.dao.AppDao
 import com.example.gradesaver.database.entities.Activity
 import com.example.gradesaver.database.entities.CheckedActivity
+import com.example.gradesaver.database.entities.ExportedActivity
 import com.example.gradesaver.database.entities.PersonalActivity
 import com.example.gradesaver.database.entities.User
 import com.example.gradesaver.decorators.ActivityDecorator
 import com.example.gradesaver.decorators.BoldDecorator
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
+import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+import com.google.api.client.http.javanet.NetHttpTransport
+import com.google.api.client.json.gson.GsonFactory
+import com.google.api.client.util.DateTime
+import com.google.api.services.calendar.CalendarScopes
+import com.google.api.services.calendar.model.Event
+import com.google.api.services.calendar.model.EventDateTime
 import com.jakewharton.threetenabp.AndroidThreeTen
 import com.prolificinteractive.materialcalendarview.CalendarDay
 import com.prolificinteractive.materialcalendarview.MaterialCalendarView
@@ -45,10 +60,14 @@ class ProfessorCalendarActivity : AppCompatActivity() {
     private var lastClickTime: Long = 0
     private lateinit var calendarView: MaterialCalendarView
 
+    private lateinit var googleSignInClient: GoogleSignInClient
+
     companion object {
         private const val REQUEST_NOTIFICATION_PERMISSION = 1
+        private const val RC_SIGN_IN = 9001
     }
 
+    @SuppressLint("WrongViewCast")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AndroidThreeTen.init(this)
@@ -65,6 +84,7 @@ class ProfessorCalendarActivity : AppCompatActivity() {
         calendarView = findViewById(R.id.calendarView)
         val addPersonalActivityButton = findViewById<Button>(R.id.addPersonalActivityButton)
         val showLegendButton = findViewById<Button>(R.id.showLegendButton)
+        val shareIcon = findViewById<ImageView>(R.id.shareIcon)
 
         val today = LocalDate.now()
         val calendarDay = CalendarDay.from(today)
@@ -91,6 +111,151 @@ class ProfessorCalendarActivity : AppCompatActivity() {
         showLegendButton.setOnClickListener {
             showLegendDialog()
         }
+
+        shareIcon.setOnClickListener {
+            showExportDialog()
+        }
+
+        configureGoogleSignIn()
+    }
+
+    private fun configureGoogleSignIn() {
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestEmail()
+            .requestScopes(com.google.android.gms.common.api.Scope(CalendarScopes.CALENDAR))
+            .build()
+
+        googleSignInClient = GoogleSignIn.getClient(this, gso)
+        Log.d("SignInConfig", "Google Sign-In configured.")
+    }
+
+    private fun showExportDialog() {
+        val builder = AlertDialog.Builder(this)
+        val inflater = layoutInflater
+        val dialogView = inflater.inflate(R.layout.dialog_export_calendar, null)
+        builder.setView(dialogView)
+
+        val emailTextView = dialogView.findViewById<EditText>(R.id.emailTextView)
+        val useDifferentEmailCheckBox = dialogView.findViewById<CheckBox>(R.id.useDifferentEmailCheckBox)
+        val exportButton = dialogView.findViewById<Button>(R.id.exportButton)
+        val cancelButton = dialogView.findViewById<Button>(R.id.cancelButton)
+
+        val currentUserEmail = GoogleSignIn.getLastSignedInAccount(this)?.email ?: "user@example.com"
+        emailTextView.setText(currentUserEmail)
+        emailTextView.isEnabled = false
+
+        useDifferentEmailCheckBox.setOnCheckedChangeListener { _, isChecked ->
+            emailTextView.isEnabled = isChecked
+        }
+
+        val alertDialog = builder.create()
+
+        cancelButton.setOnClickListener {
+            alertDialog.dismiss()
+        }
+
+        exportButton.setOnClickListener {
+            val email = emailTextView.text.toString()
+            exportToGoogleCalendar(email)
+            alertDialog.dismiss()
+        }
+
+        alertDialog.show()
+    }
+
+    private fun exportToGoogleCalendar(email: String) {
+        val account = GoogleSignIn.getLastSignedInAccount(this)
+        if (account != null) {
+            lifecycleScope.launch {
+                val allActivities = dao.getActivitiesForProfessorByDay(user!!.userId, Date(0), Date(Long.MAX_VALUE))
+                val allPersonalActivities = dao.getPersonalActivitiesByUser(user!!.userId)
+                val exportedActivities = dao.getAllExportedActivities()
+
+                val exportedActivityIds = exportedActivities.filter { it.activityType == "university" }.map { it.activityId }.toSet()
+                val exportedPersonalActivityIds = exportedActivities.filter { it.activityType == "personal" }.map { it.activityId }.toSet()
+
+                withContext(Dispatchers.IO) {
+                    try {
+                        val credential = GoogleAccountCredential.usingOAuth2(
+                            this@ProfessorCalendarActivity, listOf(CalendarScopes.CALENDAR)
+                        ).setSelectedAccount(account.account)
+
+                        val service = com.google.api.services.calendar.Calendar.Builder(
+                            NetHttpTransport(),
+                            GsonFactory.getDefaultInstance(),
+                            credential
+                        ).setApplicationName("GradeSaver").build()
+
+                        // Export all university activities
+                        for (activity in allActivities) {
+                            if (activity.activityId !in exportedActivityIds) {
+                                val startDateTime = toDateTime(activity.dueDate)
+                                val endDateTime = toDateTime(activity.dueDate) // Adjust this if your activities have specific end times
+
+                                val event = Event()
+                                    .setSummary(activity.activityName)
+                                    .setDescription("University Activity")
+                                    .setStart(EventDateTime().setDateTime(startDateTime))
+                                    .setEnd(EventDateTime().setDateTime(endDateTime))
+
+                                service.events().insert("primary", event).execute()
+                                dao.insertExportedActivity(ExportedActivity(0, activity.activityId, "university"))
+                            }
+                        }
+
+                        // Export all personal activities
+                        for (personalActivity in allPersonalActivities) {
+                            if (personalActivity.personalActivityId !in exportedPersonalActivityIds) {
+                                val startDateTime = toDateTime(personalActivity.dueDate)
+                                val endDateTime = toDateTime(personalActivity.dueDate) // Adjust this if your activities have specific end times
+
+                                val event = Event()
+                                    .setSummary(personalActivity.activityName)
+                                    .setDescription("Personal Activity")
+                                    .setStart(EventDateTime().setDateTime(startDateTime))
+                                    .setEnd(EventDateTime().setDateTime(endDateTime))
+
+                                service.events().insert("primary", event).execute()
+                                dao.insertExportedActivity(ExportedActivity(0, personalActivity.personalActivityId, "personal"))
+                            }
+                        }
+
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(this@ProfessorCalendarActivity, "Exported to Google Calendar", Toast.LENGTH_SHORT).show()
+                        }
+
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(this@ProfessorCalendarActivity, "Error exporting to Google Calendar", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            }
+        } else {
+            googleSignInClient.signInIntent.also { signInIntent ->
+                startActivityForResult(signInIntent, RC_SIGN_IN)
+            }
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == RC_SIGN_IN) {
+            Log.d("SignInResult", "Received result from Google Sign-In.")
+            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
+            try {
+                val account = task.getResult(ApiException::class.java)
+                if (account != null) {
+                    Log.d("SignInSuccess", "Successfully signed in: ${account.email}")
+                    exportToGoogleCalendar(account.email ?: "user@example.com")
+                }
+            } catch (e: ApiException) {
+                e.printStackTrace()
+                Log.e("SignInError", "Sign in failed: ${e.statusCode}")
+                Toast.makeText(this, "Sign in failed: ${e.statusCode}", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun showLegendDialog() {
@@ -110,25 +275,25 @@ class ProfessorCalendarActivity : AppCompatActivity() {
 
         legendItems.forEach { (colorName, description) ->
             val color = when (colorName) {
-                "Teal" -> ContextCompat.getColor(this, R.color.teal)
-                "Default" -> ContextCompat.getColor(this, R.color.defaultActivityColor)
-                "Midterm" -> ContextCompat.getColor(this, R.color.both)
+                "Teal" -> ContextCompat.getColor(this@ProfessorCalendarActivity, R.color.teal)
+                "Default" -> ContextCompat.getColor(this@ProfessorCalendarActivity, R.color.defaultActivityColor)
+                "Midterm" -> ContextCompat.getColor(this@ProfessorCalendarActivity, R.color.both)
                 else -> Color.TRANSPARENT
             }
 
-            val itemLayout = LinearLayout(this).apply {
+            val itemLayout = LinearLayout(this@ProfessorCalendarActivity).apply {
                 orientation = LinearLayout.HORIZONTAL
                 setPadding(8, 8, 8, 8)
             }
 
-            val colorView = View(this).apply {
+            val colorView = View(this@ProfessorCalendarActivity).apply {
                 setBackgroundColor(color)
                 layoutParams = LinearLayout.LayoutParams(50, 50).apply {
                     setMargins(0, 0, 16, 0)
                 }
             }
 
-            val descriptionView = TextView(this).apply {
+            val descriptionView = TextView(this@ProfessorCalendarActivity).apply {
                 text = description
                 textSize = 16f
                 setTextColor(Color.BLACK)
@@ -375,21 +540,21 @@ class ProfessorCalendarActivity : AppCompatActivity() {
     }
 
     private fun showCourseInfoPopup(activity: Any) {
-        val courseName = when (activity) {
+        when (activity) {
             is Activity -> lifecycleScope.launch {
                 val course = dao.getCourseById(activity.courseId)
                 withContext(Dispatchers.Main) {
-                    showInfoDialog(course?.courseName ?: "Unknown Course")
+                    showInfoDialog(course?.courseName ?: "Unknown Course", activity.activityName)
                 }
             }
             else -> return
         }
     }
 
-    private fun showInfoDialog(courseName: String) {
+    private fun showInfoDialog(courseName: String, activityName: String) {
         AlertDialog.Builder(this).apply {
             setTitle("Course Information")
-            setMessage("Course Name: $courseName")
+            setMessage("Course Name: $courseName\nActivity Name: $activityName")
             setPositiveButton("OK", null)
         }.show()
     }
@@ -466,5 +631,11 @@ class ProfessorCalendarActivity : AppCompatActivity() {
 
         // Refresh the calendar view
         calendarView.invalidateDecorators()
+    }
+
+    private fun toDateTime(date: Date): DateTime {
+        val calendar = Calendar.getInstance()
+        calendar.time = date
+        return DateTime(calendar.timeInMillis)
     }
 }

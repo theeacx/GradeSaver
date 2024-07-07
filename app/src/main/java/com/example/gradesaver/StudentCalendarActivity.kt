@@ -23,6 +23,7 @@ import com.example.gradesaver.database.AppDatabase
 import com.example.gradesaver.database.dao.AppDao
 import com.example.gradesaver.database.entities.Activity
 import com.example.gradesaver.database.entities.CheckedActivity
+import com.example.gradesaver.database.entities.ExportedActivity
 import com.example.gradesaver.database.entities.PersonalActivity
 import com.example.gradesaver.database.entities.Reminder
 import com.example.gradesaver.database.entities.User
@@ -165,8 +166,11 @@ class StudentCalendarActivity : AppCompatActivity() {
             lifecycleScope.launch {
                 val allActivities = dao.getAllActivitiesByUser(user!!.userId)
                 val allPersonalActivities = dao.getAllPersonalActivitiesByUser(user!!.userId)
+                val exportedActivities = dao.getAllExportedActivities()
 
-                // Use Google Calendar API to add events to the calendar
+                val exportedActivityIds = exportedActivities.filter { it.activityType == "university" }.map { it.activityId }.toSet()
+                val exportedPersonalActivityIds = exportedActivities.filter { it.activityType == "personal" }.map { it.activityId }.toSet()
+
                 withContext(Dispatchers.IO) {
                     try {
                         val credential = GoogleAccountCredential.usingOAuth2(
@@ -179,26 +183,38 @@ class StudentCalendarActivity : AppCompatActivity() {
                             credential
                         ).setApplicationName("GradeSaver").build()
 
-                        // Export all activities
+                        // Export all university activities
                         for (activity in allActivities) {
-                            val event = Event()
-                                .setSummary(activity.activityName)
-                                .setDescription("University Activity")
-                                .setStart(EventDateTime().setDateTime(DateTime(activity.dueDate)))
-                                .setEnd(EventDateTime().setDateTime(DateTime(activity.dueDate)))
+                            if (activity.activityId !in exportedActivityIds) {
+                                val startDateTime = toDateTime(activity.dueDate)
+                                val endDateTime = toDateTime(activity.dueDate) // Adjust this if your activities have specific end times
 
-                            service.events().insert("primary", event).execute()
+                                val event = Event()
+                                    .setSummary(activity.activityName)
+                                    .setDescription("University Activity")
+                                    .setStart(EventDateTime().setDateTime(startDateTime))
+                                    .setEnd(EventDateTime().setDateTime(endDateTime))
+
+                                service.events().insert("primary", event).execute()
+                                dao.insertExportedActivity(ExportedActivity(0, activity.activityId, "university"))
+                            }
                         }
 
                         // Export all personal activities
                         for (personalActivity in allPersonalActivities) {
-                            val event = Event()
-                                .setSummary(personalActivity.activityName)
-                                .setDescription("Personal Activity")
-                                .setStart(EventDateTime().setDateTime(DateTime(personalActivity.dueDate)))
-                                .setEnd(EventDateTime().setDateTime(DateTime(personalActivity.dueDate)))
+                            if (personalActivity.personalActivityId !in exportedPersonalActivityIds) {
+                                val startDateTime = toDateTime(personalActivity.dueDate)
+                                val endDateTime = toDateTime(personalActivity.dueDate) // Adjust this if your activities have specific end times
 
-                            service.events().insert("primary", event).execute()
+                                val event = Event()
+                                    .setSummary(personalActivity.activityName)
+                                    .setDescription("Personal Activity")
+                                    .setStart(EventDateTime().setDateTime(startDateTime))
+                                    .setEnd(EventDateTime().setDateTime(endDateTime))
+
+                                service.events().insert("primary", event).execute()
+                                dao.insertExportedActivity(ExportedActivity(0, personalActivity.personalActivityId, "personal"))
+                            }
                         }
 
                         withContext(Dispatchers.Main) {
@@ -717,6 +733,12 @@ class StudentCalendarActivity : AppCompatActivity() {
 
         // Refresh the calendar view
         calendarView.invalidateDecorators()
+    }
+
+    private fun toDateTime(date: Date): DateTime {
+        val calendar = Calendar.getInstance()
+        calendar.time = date
+        return DateTime(calendar.timeInMillis)
     }
 
     companion object {
