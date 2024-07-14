@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Spinner
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.gradesaver.R
@@ -17,12 +18,15 @@ import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
+import com.github.mikephil.charting.highlight.Highlight
+import com.github.mikephil.charting.listener.OnChartValueSelectedListener
 import kotlinx.coroutines.launch
 
 class HorizontalBarChartFragment : Fragment() {
     private var userId: Int? = null
     private lateinit var horizontalBarChart: HorizontalBarChart
     private lateinit var reminderSpinner: Spinner
+    private var labels = ArrayList<String>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -65,7 +69,7 @@ class HorizontalBarChartFragment : Fragment() {
             val reminderCounts = database.appDao().getRemindersCountByActivity(courseId)
 
             val entries = ArrayList<BarEntry>()
-            val labels = ArrayList<String>()
+            labels.clear()
             reminderCounts.forEachIndexed { index, reminderCount ->
                 entries.add(BarEntry(index.toFloat(), reminderCount.reminderCount.toFloat()))
                 labels.add(reminderCount.activityName)
@@ -89,10 +93,26 @@ class HorizontalBarChartFragment : Fragment() {
                 labelCount = labels.size
                 textSize = 12f
                 labelRotationAngle = -45f
+                setDrawLabels(false) // Disable x-axis labels
             }
             horizontalBarChart.axisLeft.axisMinimum = 0f
             horizontalBarChart.axisRight.isEnabled = true
             horizontalBarChart.description.isEnabled = false
+
+            horizontalBarChart.setOnChartValueSelectedListener(object : OnChartValueSelectedListener {
+                override fun onValueSelected(e: com.github.mikephil.charting.data.Entry?, h: Highlight?) {
+                    e?.let {
+                        val index = it.x.toInt()
+                        if (index >= 0 && index < labels.size) {
+                            val label = labels[index]
+                            Toast.makeText(context, "Activity: $label\nReminders: ${it.y.toInt()}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+
+                override fun onNothingSelected() {}
+            })
+
             horizontalBarChart.invalidate()
         }
     }
