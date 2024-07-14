@@ -19,6 +19,7 @@ import com.example.gradesaver.database.AppDatabase
 import com.example.gradesaver.database.dao.AppDao
 import com.example.gradesaver.database.entities.Activity
 import com.example.gradesaver.database.entities.Course
+import com.example.gradesaver.database.entities.User
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
@@ -29,6 +30,7 @@ class StudentActivityListActivity : AppCompatActivity() {
     private lateinit var dao: AppDao
     private lateinit var listView: ListView
     private lateinit var activitiesWithProfessorEmail: List<ActivityWithProfessorEmail>
+    private var studentId: Int = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,7 +39,15 @@ class StudentActivityListActivity : AppCompatActivity() {
         dao = AppDatabase.getInstance(this).appDao()
         listView = findViewById(R.id.activityListView)
 
-        loadActivities()
+        val user = intent.getSerializableExtra("USER_DETAILS") as? User
+        studentId = user?.userId ?: -1
+
+        if (studentId != -1) {
+            loadActivities(studentId)
+        } else {
+            Toast.makeText(this, "Invalid user ID", Toast.LENGTH_SHORT).show()
+            finish()
+        }
 
         val exportPdfButton: Button = findViewById(R.id.exportPdfButton)
         exportPdfButton.setOnClickListener {
@@ -45,10 +55,10 @@ class StudentActivityListActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadActivities() {
+    private fun loadActivities(studentId: Int) {
         lifecycleScope.launch {
             val currentDate = Date()
-            val activitiesWithCourses = dao.getUpcomingActivities(currentDate)
+            val activitiesWithCourses = dao.getUpcomingActivities(studentId, currentDate)
             activitiesWithProfessorEmail = activitiesWithCourses.map { activityWithCourse ->
                 val professor = dao.getUserById(activityWithCourse.course.professorId)
                 ActivityWithProfessorEmail(activityWithCourse.activity, activityWithCourse.course, professor?.email ?: "No email")

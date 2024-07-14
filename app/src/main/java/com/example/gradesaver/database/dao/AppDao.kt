@@ -464,8 +464,15 @@ interface AppDao {
     """)
     suspend fun getAllActivityDeadlinesByDayExceptCourse(courseId: Int): List<ActivityDeadlineCount>
 
-    @Query("SELECT a.*, c.courseName FROM activities a JOIN courses c ON a.courseId = c.courseId WHERE a.dueDate > :currentDate")
-    suspend fun getUpcomingActivities(currentDate: Date): List<ActivityWithCourse>
+    @Query("""
+    SELECT a.*, c.courseName 
+    FROM activities a 
+    JOIN courses c ON a.courseId = c.courseId 
+    JOIN enrollments e ON c.courseId = e.courseId 
+    WHERE e.studentId = :userId AND a.dueDate > :currentDate
+""")
+    suspend fun getUpcomingActivities(userId: Int, currentDate: Date): List<ActivityWithCourse>
+
 
     @Query("SELECT * FROM activities WHERE courseId IN (SELECT courseId FROM enrollments WHERE studentId = :userId)")
     suspend fun getAllActivitiesByUser(userId: Int): List<Activity>
